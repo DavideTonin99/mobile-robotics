@@ -7,6 +7,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 
+###
+# per il dataset:
+# fai una cartella "dataset" e dentro ci metti i file .bag
+###
+
 DATA_BASE_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'dataset')
 IMAGES_BASE_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'images')
 SAVE_PLOT = True
@@ -15,8 +20,8 @@ KEYS = ["pose.pose.x", "pose.pose.y", "pose.pose.theta"]
 def rosbag_to_csv(data_base_path=None):
     csv_file_out_arr = []
 
-    for trajectory in os.scandir(data_base_path):
-        BAG_PATH = os.path.join(data_base_path, trajectory.name)
+    for directory in os.scandir(data_base_path):
+        BAG_PATH = os.path.join(data_base_path, directory.name)
 
         if os.path.isfile(BAG_PATH):
             trajectory_bag = bagreader(BAG_PATH)
