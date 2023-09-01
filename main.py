@@ -18,20 +18,29 @@ SAVE_PLOT = True
 KEYS = ["pose.pose.x", "pose.pose.y", "pose.pose.theta"]
 
 def rosbag_to_csv(data_base_path=None):
-    csv_file_out_arr = []
+    csv_path_list = [] # lista con path di tutti i csv creati
+    dir_path_list = [] # lista con path di tutte le cartelle create
 
-    for directory in os.scandir(data_base_path):
-        BAG_PATH = os.path.join(data_base_path, directory.name)
+    # converti bag in csv
+    for entry in os.scandir(data_base_path):
+        path = os.path.join(data_base_path, entry.name)
 
-        if os.path.isfile(BAG_PATH):
-            trajectory_bag = bagreader(BAG_PATH)
+        if os.path.isfile(path):
+            trajectory_bag = bagreader(path)
 
             for topic in trajectory_bag.topic_table['Topics']:
                 filepath = trajectory_bag.message_by_topic(topic)  # save to csv by topic
-                csv_file_out_arr.append(filepath)
+                csv_path_list.append(filepath)
                 # print("rosbag_to_csv %s" % filepath)
 
-    return csv_file_out_arr
+    # popola array con lista di cartelle create (later use)
+    for entry in os.scandir(data_base_path):
+        path = os.path.join(data_base_path, entry.name)
+
+        if os.path.isdir(path):
+            dir_path_list.append(path)
+
+    return [csv_path_list, dir_path_list]
 
 def process_lidar_data(path_list):
     '''
@@ -97,6 +106,87 @@ def process_lidar_data(path_list):
         df = pd.DataFrame(proc_data_dict)
         df.to_csv(output_filepath)
 
+def create_ml_csv(dir_path_list):
+    '''
+    per ogni cartella crea un file "ml_data_xxx.csv" contenente i dati processati del lidar (LS, LC, LD) e i dati della posa del robot (x, y, theta)
+    questo sarà il file che viene dato in pasto al modello machine learning, hence il nome "ml_data"
+    :param path_list: la lista di folders in cui sono presenti il file con i dati lidar processati (robot_processed_lidar.csv)
+    e il file con i dati della posa del robot (robot-robot_local_control-LocalizationComponent-status.csv)
+    :return: none
+    '''
+
+    for curr_dir in dir_path_list:
+        print("processing folder: %s" % curr_dir)
+
+        combined_data = {  # sia dati lidar (LS, LC, LD) che dati posizione (x, y, theta)
+            'Time_lidar': [],
+            'Time_pose': [],
+            'x': [],
+            'y': [],
+            'theta': [],
+            'LS': [],
+            'LC': [],
+            'LD': [],
+        }
+
+        for entry in os.scandir(curr_dir):
+            path = os.path.join(curr_dir, entry.name)
+
+            if not ("processed_lidar" in path or "LocalizationComponent" in path):
+                continue
+
+            if "processed_lidar" in path:
+                csv_data = pd.read_csv(path, sep=",")  # read existing file
+                combined_data["Time_lidar"] = csv_data["Time"]
+                combined_data["LS"] = csv_data["LS"]
+                combined_data["LC"] = csv_data["LC"]
+                combined_data["LD"] = csv_data["LD"]
+
+            if "LocalizationComponent" in path:
+                csv_data = pd.read_csv(path, sep=",")  # read existing file
+                combined_data["Time_pose"] = csv_data["Time"]
+                combined_data["x"] = csv_data["pose.pose.x"]
+                combined_data["y"] = csv_data["pose.pose.y"]
+                combined_data["theta"] = csv_data["pose.pose.theta"]
+
+        if len(combined_data["Time_lidar"]) > 0:
+            # re-arrange data perchè i dati pose sono inviati con una frequenza minore,
+            # quindi ho molti piu dati lidar che dati pose
+            # quindi non posso semplicemente affiancare le due colonne di dati altrimenti la colonna lidar è lunga 1000 e quella pose 100
+            new_x = [-1] * len(combined_data["Time_lidar"])
+            new_y = [-1] * len(combined_data["Time_lidar"])
+            new_theta = [-1] * len(combined_data["Time_lidar"])
+            new_time = [-1] * len(combined_data["Time_lidar"])
+
+            for i in range(len(combined_data["Time_pose"])):
+                # trova time instant lidar piu vicino a time instant pose
+                curr_pose_time = combined_data["Time_pose"][i]
+                up_limit = curr_pose_time + 0.1
+                bottom_limit = curr_pose_time - 0.1
+                time_idx = np.argwhere(np.logical_and(combined_data["Time_lidar"] >= bottom_limit, combined_data["Time_lidar"] <= up_limit))
+                time_idx = time_idx.flatten()[0]
+
+                # sposta dati pose all'indice trovato
+                new_x[time_idx] = combined_data["x"][i]
+                new_y[time_idx] = combined_data["y"][i]
+                new_theta[time_idx] = combined_data["theta"][i]
+                new_time[time_idx] = combined_data["Time_pose"][i]
+                # print("pose %.5f moved to lidar %.5f" % (curr_pose_time, combined_data["Time_lidar"][time_idx]))
+
+            combined_data["x"] = new_x
+            combined_data["y"] = new_y
+            combined_data["theta"] = new_theta
+            combined_data["Time_pose"] = new_time
+
+
+            # save to file
+            dirname = os.path.basename(curr_dir)
+            output_filename = "ml_data_" + dirname + ".csv"
+            output_filepath = os.path.join(curr_dir, output_filename)
+            df = pd.DataFrame(combined_data)
+            df.to_csv(output_filepath)
+
+
 def plot_data(path_list=None, show_plot=False, save_plot=False):
 
     for csv_filepath in path_list:
@@ -138,11 +228,15 @@ def plot_data(path_list=None, show_plot=False, save_plot=False):
 
 if __name__ == '__main__':
     print("Export rosbag to csv")
-    csv_file_out_arr = rosbag_to_csv(DATA_BASE_PATH)
-    print(csv_file_out_arr)
+    [csv_path_list, dir_path_list] = rosbag_to_csv(DATA_BASE_PATH)
+
+    print(csv_path_list)
+    print(dir_path_list)
 
     print("process lidar data")
-    process_lidar_data(csv_file_out_arr)
+    process_lidar_data(csv_path_list)
+
+    create_ml_csv(dir_path_list)
 
     # print("plot 2d position")
-    #plot_data(csv_file_out_arr, show_plot=False, save_plot=SAVE_PLOT)
+    #plot_data(csv_path_list, show_plot=False, save_plot=SAVE_PLOT)
