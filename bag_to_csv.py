@@ -7,6 +7,8 @@ import numpy as np
 import os
 from utils import *
 
+SAVE_PLOT = True
+KEYS = ["pose.pose.x", "pose.pose.y", "pose.pose.theta"]
 
 def rosbag_to_csv(data_base_path=None):
     """
@@ -191,6 +193,8 @@ def create_ml_csv(dir_path_list):
             df = pd.DataFrame(combined_data)
             # fill NaN values with linear interpolation
             df.interpolate(method='linear', inplace=True)
+            del df['Time_lidar']
+            del df['Time_pose']
             df.to_csv(output_filepath)
 
 
@@ -254,3 +258,5 @@ def main():
     process_lidar_data(csv_path_list)
 
     create_ml_csv(dir_path_list)
+
+main()
