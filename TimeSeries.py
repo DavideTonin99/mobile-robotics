@@ -91,7 +91,7 @@ class TimeSeries:
         :param step: step of the window
         """
         self.data = TimeSeriesUtils._remove_window(
-            self.data, n_features=len(TimeSeriesUtils.DEFAULT_COLUMNS), step=step)
+            self.data, n_features=len(TimeSeriesUtils.FEATURES), step=step)
 
     def normalize(self, normalizer) -> None:
         """

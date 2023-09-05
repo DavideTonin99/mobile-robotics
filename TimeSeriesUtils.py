@@ -5,6 +5,7 @@ from utils import *
 
 class TimeSeriesUtils:
     FEATURES = ['x', 'y', 'theta', 'LS', 'LC', 'LD']
+    PLOT_FEATURES = {'pose': ['x', 'y', 'theta'], 'lidar': ['LS', 'LC', 'LD']}
     
     def __init__(self) -> None:
         """
@@ -101,6 +102,7 @@ class TimeSeriesUtils:
     @staticmethod
     def _load_from_features_csv(
         name,
+        remove_header=True,
         data_base_path=None,
     ) -> np.array:
         """
@@ -116,6 +118,8 @@ class TimeSeriesUtils:
         if os.path.isdir(os.path.join(data_base_path, name)):
             result = pd.read_csv(os.path.join(
                 data_base_path, name, f'ml_data_{name}.csv'), sep=",", header=None, names=TimeSeriesUtils.FEATURES).to_numpy()
+            if remove_header:
+                result = result[1:]
         else:
             raise Exception(f"Time series {name} not found")
         return result
