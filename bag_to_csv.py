@@ -193,9 +193,10 @@ def create_ml_csv(dir_path_list):
             df = pd.DataFrame(combined_data)
             # fill NaN values with linear interpolation
             df.interpolate(method='linear', inplace=True)
+            df.fillna(method='bfill', inplace=True)
             del df['Time_lidar']
             del df['Time_pose']
-            df.to_csv(output_filepath)
+            df.to_csv(output_filepath, sep=",", header=False, index=False)
 
 
 def plot_data(path_list=None, show_plot=False, save_plot=False):

@@ -102,7 +102,7 @@ class TimeSeriesUtils:
     @staticmethod
     def _load_from_features_csv(
         name,
-        remove_header=True,
+        remove_header=False,
         data_base_path=None,
     ) -> np.array:
         """
