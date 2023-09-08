@@ -2,7 +2,6 @@ import math
 from bagpy import bagreader
 import pandas as pd
 import seaborn as sns
-import matplotlib.pyplot as plt
 import numpy as np
 import os
 from utils import *
@@ -259,5 +258,7 @@ def main():
     process_lidar_data(csv_path_list)
 
     create_ml_csv(dir_path_list)
+
+    plot_data(dir_path_list)
 
 main()
