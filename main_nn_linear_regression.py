@@ -125,8 +125,33 @@ xE = torch.from_numpy(t_eval.data).float().to(device)
 yE = torch.from_numpy(t_eval.data).float().to(device)
 model = model.to(device)
 
-lossLog = fit(model=model, xT=xT, yT=yT, xE=xE, yE=yE, scheduler=scheduler, lossFun=lossFun, epoch=20000, printEpoch=True)
+lossLog = fit(model=model, xT=xT, yT=yT, xE=xE, yE=yE, scheduler=scheduler, lossFun=lossFun, epoch=10000, printEpoch=True)
 
-printPlotLoss(lossLog, cutStart=10)
+# calcolare il percentile per avere la threshold
+# il percentile lo calcolo da lossLog.e che contiene gli errori di predizione per la traiettoria di evaluation
 
-# printPlotLoss(lossLog, cutStart=380)
+# printPlotLoss(lossLog, cutStart=10)
+
+# LOAD TEST DATASET
+dataset_test_original = {}
+for i in range(1, 11):
+    t = TimeSeries(f'anomaly_{i}', auto_load=True)
+    dataset_test_original[t.name] = t
+
+dataset_test = {}
+for t_name, t in dataset_test_original.items():
+    t.add_window(type=WINDOW_TYPE, window_size=WINDOW_SIZE, stride=WINDOW_STRIDE)
+    t.normalize(scaler)
+
+    for row in t.data:
+        row = np.array([row])
+        x = torch.from_numpy(row).float().to(device)
+        y = torch.from_numpy(row).float().to(device)
+        model.eval()
+        result = model(x)
+        result = result.cpu().detach().numpy()
+        result = (np.square(result - row).mean(axis=1))
+        print(result)
+        # result = errore di predizione della riga (ovvero finestra) corrente
+        # mettere result in un array
+    # confrontare l'array con la soglia per identificare le anomalie per la traiettoria corrente
