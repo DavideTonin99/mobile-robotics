@@ -4,12 +4,13 @@ from Dataset import *
 from matplotlib import pyplot as plt
 from utils import *
 from sklearn.preprocessing import StandardScaler
+from plot_time_series import *
 
 # CONSTANTS
 MOVING_AVG_STEP = 50
 WINDOW_TYPE = 'sliding'
-WINDOW_SIZE = 20
-WINDOW_STRIDE = 5
+WINDOW_SIZE = 30
+WINDOW_STRIDE = 20
 PCA_COMPONENTS = 10
 
 scaler = StandardScaler()
@@ -18,7 +19,7 @@ dataset = {}
 
 # Load the time series for training
 # TRAINING
-for i in range(1, 8):
+for i in range(7, 8):
     t = TimeSeries(f'nominal_{i}', auto_load=True)
     dataset[t.name] = t
 
@@ -74,4 +75,5 @@ for t_name, t in dataset_test_original.items():
     t.normalize_inverse(scaler)
     t.remove_window(step=WINDOW_STRIDE)
     plot_ts(f'Figure {t_name}', ts={'original': dataset_test_original[t_name].data, 'predict': t.data}, features=TimeSeriesUtils.PLOT_FEATURES,
-        n_rows=2, n_cols=3, figsize=(15, 5), colors={'original': 'black', 'predict': 'orange'}, ts_name=t_name, save_plot=True)
+        n_rows=2, n_cols=3, figsize=(15, 5), colors={'original': 'black', 'predict': 'orange'}, ts_name=t_name, show_plot=False, save_plot=True)
+    # plot_scatter(dataset_test_original[t_name].data, t.data)
