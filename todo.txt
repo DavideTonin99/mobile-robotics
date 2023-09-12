@@ -1,3 +1,6 @@
+!!! REFACTORING SEMPRE !!!
+!!! IL CODICE DEVE ESSERE BELLO !!!
+
 [*] pca
 [*] nn linear regression
 [*] one class svm con pca
