@@ -3,6 +3,7 @@ from TimeSeriesUtils import *
 from Dataset import *
 from matplotlib import pyplot as plt
 from sklearn.preprocessing import StandardScaler
+from sklearn.svm import OneClassSVM
 
 from plot_time_series import *
 from main import *
@@ -24,6 +25,11 @@ for t_name in t_list:
     t = TimeSeries(t_name, auto_load=True)
     dataset[t_name] = t
 
+t_list = [f'anomaly_{i}' for i in range(10, 11)]
+for t_name in t_list:
+    t = TimeSeries(t_name, auto_load=True)
+    dataset[t_name] = t
+
 dataset_train = Dataset(
     f'train {WINDOW_TYPE} window ws={WINDOW_SIZE}, stride={WINDOW_STRIDE}', time_series=dataset)
 
@@ -38,7 +44,7 @@ dataset_eval = Dataset(
     f'evaluation {WINDOW_TYPE} window ws={WINDOW_SIZE}, stride={WINDOW_STRIDE}', time_series=dataset)
 
 # test dataset
-t_list = [f'anomaly_{i}' for i in range(1, 11)]
+t_list = [f'anomaly_{i}' for i in range(1, 10)]
 test = {}
 for t_name in t_list:
     t = TimeSeries(t_name, auto_load=True)
@@ -47,5 +53,7 @@ for t_name in t_list:
 dataset_test = Dataset(
     f'test {WINDOW_TYPE} window ws={WINDOW_SIZE}, stride={WINDOW_STRIDE}', time_series=test)
 
-main_pca(dataset_train=dataset_train, scaler_model=scaler_model, window_type=WINDOW_TYPE,
-         window_size=WINDOW_SIZE, window_stride=WINDOW_STRIDE, pca_components=PCA_COMPONENTS, show_plot_variance=False, threshold_method='local_outlier_factor', dataset_eval=dataset_eval, dataset_test=dataset_test)
+model = OneClassSVM(nu=0.01, kernel="rbf", gamma=0.001)
+
+main_svm(dataset_train=dataset_train, model=model, scaler_model=scaler_model, window_type=WINDOW_TYPE,
+         window_size=WINDOW_SIZE, window_stride=WINDOW_STRIDE, with_pca=True, pca_components=PCA_COMPONENTS, show_plot_variance=False, dataset_eval=dataset_eval, dataset_test=dataset_test)

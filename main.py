@@ -1,4 +1,5 @@
 from sklearn.svm import OneClassSVM
+from sklearn.neighbors import LocalOutlierFactor
 
 from TimeSeriesUtils import *
 from TimeSeries import *
@@ -56,6 +57,8 @@ def main_pca(dataset_train, scaler_model, window_type, window_size, window_strid
         pc_lower_bound, pc_upper_bound = compute_quantile_error_threshold(errors=train_errors, lower_perc=0.05, upper_perc=0.95)
     elif threshold_method == 'svm':
         one_class_model = OneClassSVM(gamma=0.001, nu=0.01, kernel='rbf').fit(train_errors.reshape(-1, 1))
+    elif threshold_method == 'local_outlier_factor':
+        local_outlier_factor_model = LocalOutlierFactor(n_neighbors=20, novelty=True, contamination='auto').fit(train_errors.reshape(-1, 1))
     
     plot_ts(title="PCA Figure Train", ts_name="train", ts={'start': dataset_train.ts_data.data, 'end': dataset_train_process.ts_data.data}, features=TimeSeriesUtils.PLOT_FEATURES,
             n_rows=2, n_cols=3, figsize=(15, 5), colors={'start': 'black', 'end': 'orange'}, save_plot=True, subfolder=f"pca_{threshold_method}")
@@ -65,7 +68,7 @@ def main_pca(dataset_train, scaler_model, window_type, window_size, window_strid
             type=window_type, window_size=window_size, stride=window_stride)
         dataset_eval_process.normalize(normalizer=scaler_model, mode='single')
 
-        # apply pca on train dataset
+        # apply pca on eval dataset
         dataset_eval_process.pca(model=model, mode='single')
         dataset_eval_process.pca_inverse(model=model, mode='single')
 
@@ -85,6 +88,8 @@ def main_pca(dataset_train, scaler_model, window_type, window_size, window_strid
                 eval_anomalies_mask = ((eval_errors > pc_upper_bound) | (eval_errors < pc_lower_bound)) == True
             elif threshold_method == 'svm':
                 eval_anomalies_mask = one_class_model.predict(eval_errors.reshape(-1, 1)) == -1
+            elif threshold_method == 'local_outlier_factor':
+                eval_anomalies_mask = local_outlier_factor_model.predict(eval_errors.reshape(-1, 1)) == -1
 
             if eval_anomalies_mask is not None:            
                 print("eval", np.count_nonzero(eval_anomalies_mask))
@@ -102,7 +107,7 @@ def main_pca(dataset_train, scaler_model, window_type, window_size, window_strid
             type=window_type, window_size=window_size, stride=window_stride)
         dataset_test_process.normalize(normalizer=scaler_model, mode='single')
 
-        # apply pca on train dataset
+        # apply pca on test dataset
         dataset_test_process.pca(model=model, mode='single')
         dataset_test_process.pca_inverse(model=model, mode='single')
 
@@ -122,6 +127,8 @@ def main_pca(dataset_train, scaler_model, window_type, window_size, window_strid
                 test_anomalies_mask = ((test_errors > pc_upper_bound) | (test_errors < pc_lower_bound)) == True
             elif threshold_method == 'svm':
                 test_anomalies_mask = one_class_model.predict(test_errors.reshape(-1, 1)) == -1
+            elif threshold_method == 'local_outlier_factor':
+                test_anomalies_mask = local_outlier_factor_model.predict(test_errors.reshape(-1, 1)) == -1
             
             if test_anomalies_mask is not None:
                 print("test", np.count_nonzero(test_anomalies_mask))
@@ -215,3 +222,185 @@ def main_nn_linear_regression(dataset_train, model, scaler_model, window_type, w
                 n_rows=2, n_cols=3, figsize=(15, 5), colors={'time_series': 'black', 'anomalies': 'red'}, markers={'anomalies': 'o'}, save_plot=True, subfolder="nn_linear_regression")
 
             print(f"{ts_name}: Anomalies detected: {count_windows_anomaly}, {errors_list}")
+
+
+def main_svm(dataset_train, model, scaler_model, window_type, window_size, window_stride, with_pca, pca_components, show_plot_variance=True, dataset_eval=None, dataset_test=None):
+    """
+    Main function for the SVM
+    :param dataset_train: training dataset
+    :param model: model
+    :param scaler_model: scaler model
+    :param window_type: window type
+    :param window_size: window size
+    :param window_stride: window stride
+    :param with_pca: apply pca
+    :param pca_components: number of components to keep
+    :param show_plot_variance: show the plot of the variance
+    :param dataset_eval: evaluation dataset
+    :param dataset_test: test dataset
+    """
+    dataset_train.add_window(type=window_type, window_size=window_size, stride=window_stride)
+    dataset_train.remove_window(step=window_stride)
+
+    dataset_eval.add_window(type=window_type, window_size=window_size, stride=window_stride)
+    dataset_eval.remove_window(step=window_stride)
+
+    dataset_test.add_window(type=window_type, window_size=window_size, stride=window_stride)
+    dataset_test.remove_window(step=window_stride)
+
+    dataset_train_process = copy.deepcopy(dataset_train)
+    if dataset_eval is not None:
+        dataset_eval_process = copy.deepcopy(dataset_eval)
+    if dataset_test is not None:
+        dataset_test_process = copy.deepcopy(dataset_test)
+
+    # TRAININ SECTION
+    dataset_train_process.add_window(
+        type=window_type, window_size=window_size, stride=window_stride)
+
+    scaler_model.fit(dataset_train_process.ts_data.data)
+    dataset_train_process.normalize(normalizer=scaler_model, mode='complete')
+
+    pca_model = None
+    if with_pca:
+        pca_model = fit_pca(dataset_train_process.ts_data.data, n_components=pca_components,
+                    show_plot_variance=show_plot_variance)
+        dataset_train_process.pca(model=pca_model, mode='complete')
+
+    model = model.fit(dataset_train_process.ts_data.data)
+
+    if dataset_eval is not None:
+        dataset_eval_process.add_window(
+            type=window_type, window_size=window_size, stride=window_stride)
+        dataset_eval_process.normalize(normalizer=scaler_model, mode='single')
+
+        # apply pca on eval dataset
+        if with_pca:
+            dataset_eval_process.pca(model=pca_model, mode='single')
+
+        for ts_name, ts in dataset_eval_process.time_series.items():
+            one_class_predict = model.predict(ts.data) == -1
+
+            eval_anomalies_mask = np.array([one_class_predict]*6).T
+            anomalies = copy.deepcopy(dataset_eval.time_series[ts_name].data)
+
+            for i in range(len(one_class_predict)):
+                if not one_class_predict[i]:
+                    anomalies[i*window_size:i*window_size + window_size] = np.nan
+
+            plot_ts(title=f"OneClass SVM {'PCA' if with_pca else 'NO PCA'} Figure Eval Anomalies {ts_name}", ts_name=f"eval_anomalies_{ts_name}", ts={'time_series': dataset_eval.time_series[ts_name].data, 'anomalies': anomalies}, features=TimeSeriesUtils.PLOT_FEATURES,
+                n_rows=2, n_cols=3, figsize=(15, 5), colors={'time_series': 'black', 'anomalies': 'red'}, markers={'anomalies': 'o'}, save_plot=True, subfolder=f"svm_{'pca' if with_pca else 'no_pca'}")
+
+    # TEST SECTION
+    if dataset_test is not None:
+        dataset_test_process.add_window(
+            type='tumbling', window_size=window_size)
+        dataset_test_process.normalize(normalizer=scaler_model, mode='single')
+
+        if with_pca:
+            # apply pca on train dataset
+            dataset_test_process.pca(model=pca_model, mode='single')
+
+        for ts_name, ts in dataset_test_process.time_series.items():
+            one_class_predict = model.predict(ts.data) == -1
+
+            test_anomalies_mask = np.array([one_class_predict]*6).T
+            anomalies = copy.deepcopy(dataset_test.time_series[ts_name].data)
+            
+            for i in range(len(one_class_predict)):
+                if not one_class_predict[i]:
+                    anomalies[i*window_size:i*window_size + window_size] = np.nan
+
+            plot_ts(title=f"OneClass SVM {'PCA' if with_pca else 'NO PCA'} Figure Test Anomalies {ts_name}", ts_name=f"test_anomalies_{ts_name}", ts={'time_series': dataset_test.time_series[ts_name].data, 'anomalies': anomalies}, features=TimeSeriesUtils.PLOT_FEATURES,
+                n_rows=2, n_cols=3, figsize=(15, 5), colors={'time_series': 'black', 'anomalies': 'red'}, markers={'anomalies': 'o'}, save_plot=True, subfolder=f"svm_{'pca' if with_pca else 'no_pca'}")
+
+
+def main_local_outlier_factor(dataset_train, model, scaler_model, window_type, window_size, window_stride, with_pca, pca_components, show_plot_variance=True, dataset_eval=None, dataset_test=None):
+    """
+    Main function for the Local Outlier Factor
+    :param dataset_train: training dataset
+    :param model: model
+    :param scaler_model: scaler model
+    :param window_type: window type
+    :param window_size: window size
+    :param window_stride: window stride
+    :param with_pca: apply pca
+    :param pca_components: number of components to keep
+    :param show_plot_variance: show the plot of the variance
+    :param dataset_eval: evaluation dataset
+    :param dataset_test: test dataset
+    """
+    dataset_train.add_window(type=window_type, window_size=window_size, stride=window_stride)
+    dataset_train.remove_window(step=window_stride)
+
+    dataset_eval.add_window(type=window_type, window_size=window_size, stride=window_stride)
+    dataset_eval.remove_window(step=window_stride)
+
+    dataset_test.add_window(type=window_type, window_size=window_size, stride=window_stride)
+    dataset_test.remove_window(step=window_stride)
+
+    dataset_train_process = copy.deepcopy(dataset_train)
+    if dataset_eval is not None:
+        dataset_eval_process = copy.deepcopy(dataset_eval)
+    if dataset_test is not None:
+        dataset_test_process = copy.deepcopy(dataset_test)
+
+    # TRAININ SECTION
+    dataset_train_process.add_window(
+        type=window_type, window_size=window_size, stride=window_stride)
+
+    scaler_model.fit(dataset_train_process.ts_data.data)
+    dataset_train_process.normalize(normalizer=scaler_model, mode='complete')
+
+    pca_model = None
+    if with_pca:
+        pca_model = fit_pca(dataset_train_process.ts_data.data, n_components=pca_components,
+                    show_plot_variance=show_plot_variance)
+        dataset_train_process.pca(model=pca_model, mode='complete')
+
+    model = model.fit(dataset_train_process.ts_data.data)
+
+    if dataset_eval is not None:
+        dataset_eval_process.add_window(
+            type=window_type, window_size=window_size, stride=window_stride)
+        dataset_eval_process.normalize(normalizer=scaler_model, mode='single')
+
+        # apply pca on eval dataset
+        if with_pca:
+            dataset_eval_process.pca(model=pca_model, mode='single')
+
+        for ts_name, ts in dataset_eval_process.time_series.items():
+            one_class_predict = model.predict(ts.data) == -1
+
+            eval_anomalies_mask = np.array([one_class_predict]*6).T
+            anomalies = copy.deepcopy(dataset_eval.time_series[ts_name].data)
+
+            for i in range(len(one_class_predict)):
+                if not one_class_predict[i]:
+                    anomalies[i*window_size:i*window_size + window_size] = np.nan
+
+            plot_ts(title=f"Local Outlier Factor {'PCA' if with_pca else 'NO PCA'} Figure Eval Anomalies {ts_name}", ts_name=f"eval_anomalies_{ts_name}", ts={'time_series': dataset_eval.time_series[ts_name].data, 'anomalies': anomalies}, features=TimeSeriesUtils.PLOT_FEATURES,
+                n_rows=2, n_cols=3, figsize=(15, 5), colors={'time_series': 'black', 'anomalies': 'red'}, markers={'anomalies': 'o'}, save_plot=True, subfolder=f"local_outlier_{'pca' if with_pca else 'no_pca'}")
+
+    # TEST SECTION
+    if dataset_test is not None:
+        dataset_test_process.add_window(
+            type='tumbling', window_size=window_size)
+        dataset_test_process.normalize(normalizer=scaler_model, mode='single')
+
+        if with_pca:
+            # apply pca on train dataset
+            dataset_test_process.pca(model=pca_model, mode='single')
+
+        for ts_name, ts in dataset_test_process.time_series.items():
+            one_class_predict = model.predict(ts.data) == -1
+
+            test_anomalies_mask = np.array([one_class_predict]*6).T
+            anomalies = copy.deepcopy(dataset_test.time_series[ts_name].data)
+            
+            for i in range(len(one_class_predict)):
+                if not one_class_predict[i]:
+                    anomalies[i*window_size:i*window_size + window_size] = np.nan
+
+            plot_ts(title=f"Local Outlier Factor {'PCA' if with_pca else 'NO PCA'} Figure Test Anomalies {ts_name}", ts_name=f"test_anomalies_{ts_name}", ts={'time_series': dataset_test.time_series[ts_name].data, 'anomalies': anomalies}, features=TimeSeriesUtils.PLOT_FEATURES,
+                n_rows=2, n_cols=3, figsize=(15, 5), colors={'time_series': 'black', 'anomalies': 'red'}, markers={'anomalies': 'o'}, save_plot=True, subfolder=f"local_outlier_{'pca' if with_pca else 'no_pca'}")

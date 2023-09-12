@@ -1,9 +1,10 @@
 [*] pca
 [*] nn linear regression
-[] one class svm
-[] local outlier factor
+[*] one class svm con pca
+[*] one class svm senza pca
+[*] local outlier factor
 [*] one class svm su errori pca
-[] local outlier factor su errori pca
+[*] local outlier factor su errori pca
 OPZIONALI
 [] tsai PatchTST
 [] tsai ...
