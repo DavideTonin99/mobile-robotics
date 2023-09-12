@@ -8,6 +8,7 @@
 [*] local outlier factor
 [*] one class svm su errori pca
 [*] local outlier factor su errori pca
+[] plot anomalie sulla mappa
 OPZIONALI
 [] tsai PatchTST
 [] tsai ...
