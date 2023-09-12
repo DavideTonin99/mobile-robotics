@@ -14,7 +14,7 @@ IMAGES_BASE_PATH = os.path.join(
     os.path.dirname(os.path.realpath(__file__)), 'images')
 
 
-def plot_ts(title, ts, features, n_rows, n_cols, figsize=(15, 5), colors={}, ts_name=None, show_plot=False, save_plot=False) -> None:
+def plot_ts(title, ts, features, n_rows, n_cols, figsize=(15, 5), colors={}, markers={}, ts_name=None, show_plot=False, save_plot=False, subfolder="") -> None:
     """
     Plot the time series
     :param title: title of the plot
@@ -39,7 +39,11 @@ def plot_ts(title, ts, features, n_rows, n_cols, figsize=(15, 5), colors={}, ts_
         col = 0
         for col_name in cols:
             for key, time_series in ts.items():
-                axs[row, col].plot(time_series[:, feature_index], color=colors[key])
+                marker = markers[key] if key in markers else None
+                color = colors[key] if key in colors else None
+
+                axs[row, col].plot(
+                    time_series[:, feature_index], color=color, marker=marker)
                 axs[row, col].set_title(f'{col_name}')
                 # axs[row, col].yaxis.set_ticks(np.arange(float(time_series[:, feature_index].min()), float(time_series[:, feature_index].max()), 0.05))
             col += 1
@@ -49,14 +53,19 @@ def plot_ts(title, ts, features, n_rows, n_cols, figsize=(15, 5), colors={}, ts_
     if save_plot:
         if not os.path.isdir(IMAGES_BASE_PATH):
             os.mkdir(IMAGES_BASE_PATH)
+        if subfolder is not None and subfolder != "":
+            if not os.path.isdir(os.path.join(IMAGES_BASE_PATH, subfolder)):
+                os.mkdir(os.path.join(IMAGES_BASE_PATH, subfolder))
 
-        image_path = os.path.join(IMAGES_BASE_PATH, f"{ts_name}_pca.png")
+        image_path = os.path.join(IMAGES_BASE_PATH, subfolder, f"{ts_name}.png")
         fig.savefig(image_path)
 
         plt.cla()
+        plt.close(fig)
 
     if show_plot:
         plt.show()
+
 
 def fit_pca(dataset, n_components=21, show_plot_variance=False) -> PCA:
     """
@@ -84,6 +93,8 @@ def fit_pca(dataset, n_components=21, show_plot_variance=False) -> PCA:
     return pca
 
 # NEURAL NETWORK
+
+
 def print_plot_loss(loss_log, cutStart=0):
     plt.figure(figsize=(20, 5))
     for n, d in loss_log.items():
@@ -121,7 +132,8 @@ def fit(model, x_training, y_training, x_eval, y_eval, optimizer, scheduler, los
                 lossE = get_loss(x_eval, y_eval, model, loss_function)
                 loss_log['t'].append(lossT)
                 loss_log['e'].append(lossE)
-                print(str(i)+'\t', round(lossT, 10), round(lossE, 10), sep='\t')
+                print(str(i)+'\t', round(lossT, 10),
+                      round(lossE, 10), sep='\t')
     return loss_log
 
 
@@ -204,48 +216,68 @@ def plot_scatter(timeseries_1=None, timeseries_2=None):
     plt.grid()
     plt.show()
 
+
 def test_sklearn(y_true, y_pred):
-  accuracy = metrics.accuracy_score(y_true, y_pred)
-  recall = metrics.recall_score(y_true, y_pred, pos_label=-1)
-  precision = metrics.precision_score(y_true, y_pred, pos_label=-1)
-  f1 = metrics.f1_score(y_true, y_pred, pos_label=-1)
-  roc_auc = metrics.roc_auc_score(y_true, y_pred)
+    accuracy = metrics.accuracy_score(y_true, y_pred)
+    recall = metrics.recall_score(y_true, y_pred, pos_label=-1)
+    precision = metrics.precision_score(y_true, y_pred, pos_label=-1)
+    f1 = metrics.f1_score(y_true, y_pred, pos_label=-1)
+    roc_auc = metrics.roc_auc_score(y_true, y_pred)
 
-  print('Precision: %f' % precision)
-  print('Recall: %f' % recall)
-  print('F1 score: %f' % f1)
-  print('Accuracy: %f' % accuracy)
-  print('Roc auc score: %f' % roc_auc)
-  print('%f\t%f\t%f\t%f' % (precision,recall,f1,accuracy))
-  print(metrics.precision_recall_fscore_support(y_true, y_pred))
+    print('Precision: %f' % precision)
+    print('Recall: %f' % recall)
+    print('F1 score: %f' % f1)
+    print('Accuracy: %f' % accuracy)
+    print('Roc auc score: %f' % roc_auc)
+    print('%f\t%f\t%f\t%f' % (precision, recall, f1, accuracy))
+    print(metrics.precision_recall_fscore_support(y_true, y_pred))
 
-  #index = ['normal', 'attack']
-  index = ['attack','normal']
-  df_confusion = pd.DataFrame(metrics.confusion_matrix(y_true, y_pred), index=index, columns=index)
-  _, ax = plt.subplots()
-  sn.heatmap(df_confusion, cmap='Blues', annot=True, fmt='g', ax=ax)
-  ax.set_xlabel('Predicted labels');ax.set_ylabel('True labels')
-  ax.set_title('Confusion Matrix')
-  #fix bug in lib, info: https://stackoverflow.com/questions/56942670/matplotlib-seaborn-first-and-last-row-cut-in-half-of-heatmap-plot
-  #bottom, top = ax.get_ylim()
-  #ax.set_ylim(bottom + 0.5, top - 0.5)
-  plt.show()
+    # index = ['normal', 'attack']
+    index = ['attack', 'normal']
+    df_confusion = pd.DataFrame(metrics.confusion_matrix(
+        y_true, y_pred), index=index, columns=index)
+    _, ax = plt.subplots()
+    sn.heatmap(df_confusion, cmap='Blues', annot=True, fmt='g', ax=ax)
+    ax.set_xlabel('Predicted labels')
+    ax.set_ylabel('True labels')
+    ax.set_title('Confusion Matrix')
+    # fix bug in lib, info: https://stackoverflow.com/questions/56942670/matplotlib-seaborn-first-and-last-row-cut-in-half-of-heatmap-plot
+    # bottom, top = ax.get_ylim()
+    # ax.set_ylim(bottom + 0.5, top - 0.5)
+    plt.show()
 
-  fpr, tpr, thresholds = metrics.roc_curve(y_true, y_pred)
-  plt.figure(1)
-  plt.plot(fpr, tpr, label=('ROC curve (area = %0.2f)'%roc_auc))
-  plt.plot([0,1],[0,1],'r--')
-  plt.xlabel('False positive rate')
-  plt.ylabel('True positive rate')
-  plt.title('ROC curve')
-  plt.show()
+    fpr, tpr, thresholds = metrics.roc_curve(y_true, y_pred)
+    plt.figure(1)
+    plt.plot(fpr, tpr, label=('ROC curve (area = %0.2f)' % roc_auc))
+    plt.plot([0, 1], [0, 1], 'r--')
+    plt.xlabel('False positive rate')
+    plt.ylabel('True positive rate')
+    plt.title('ROC curve')
+    plt.show()
 
-  precision_rt, recall_rt, threshold_rt = metrics.precision_recall_curve(y_true, y_pred)
-  plt.figure(1)
-  plt.plot(threshold_rt, precision_rt[1:], label="Precision",linewidth=1)
-  plt.plot(threshold_rt, recall_rt[1:], label="Recall",linewidth=1)
-  plt.title('Precision and recall for different threshold values')
-  plt.xlabel('Threshold')
-  plt.ylabel('Precision/Recall')
-  plt.legend()
-  plt.show()
+    precision_rt, recall_rt, threshold_rt = metrics.precision_recall_curve(
+        y_true, y_pred)
+    plt.figure(1)
+    plt.plot(threshold_rt, precision_rt[1:], label="Precision", linewidth=1)
+    plt.plot(threshold_rt, recall_rt[1:], label="Recall", linewidth=1)
+    plt.title('Precision and recall for different threshold values')
+    plt.xlabel('Threshold')
+    plt.ylabel('Precision/Recall')
+    plt.legend()
+    plt.show()
+
+
+def compute_quantile_error_threshold(errors, lower_perc, upper_perc):
+    """
+    Calculating the quantile error threshold
+    :param errors: array di errori
+    :param lower_perc: percentuale inferiore
+    :param upper_perc: percentuale superiore
+    :return: [lower_bound, upper_bound]
+    """
+    q1, q2 = np.quantile(errors, [lower_perc, upper_perc], axis=0)
+    pc_iqr = q2 - q1
+    lower_bound = q1 - (1 * pc_iqr)
+    upper_bound = q2 + (1 * pc_iqr)
+
+    return [lower_bound, upper_bound]
