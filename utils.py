@@ -67,11 +67,20 @@ def fit_pca(dataset, n_components=21, show_plot_variance=False) -> PCA:
     """
     pca = PCA(n_components=n_components)
     pca.fit(dataset)
-    if show_plot_variance:
+    if True:
+        fig = plt.figure(figsize=(15, 5))
+
         plt.plot(np.cumsum(pca.explained_variance_ratio_))
         plt.xlabel('number of components')
         plt.ylabel('cumulative explained variance')
-        plt.show()
+
+        if not os.path.isdir(IMAGES_BASE_PATH):
+            os.mkdir(IMAGES_BASE_PATH)
+
+        image_path = os.path.join(IMAGES_BASE_PATH, f"variance_pca.png")
+        fig.savefig(image_path)
+        plt.cla()
+        # plt.show()
     return pca
 
 # NEURAL NETWORK
