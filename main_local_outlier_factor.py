@@ -12,7 +12,7 @@ from utils import *
 # CONSTANTS
 MOVING_AVG_STEP = 50
 WINDOW_TYPE = 'sliding'
-WINDOW_SIZE = 30
+WINDOW_SIZE = 15
 WINDOW_STRIDE = 10
 PCA_COMPONENTS = 7
 
@@ -50,10 +50,15 @@ for t_name in t_list:
     t = TimeSeries(t_name, auto_load=True)
     test[t_name] = t
 
+t_list = [f'nominal_{i}' for i in range(1, 7)]
+for t_name in t_list:
+    t = TimeSeries(t_name, auto_load=True)
+    test[t_name] = t
+
 dataset_test = Dataset(
     f'test {WINDOW_TYPE} window ws={WINDOW_SIZE}, stride={WINDOW_STRIDE}', time_series=test)
 
-model = LocalOutlierFactor(n_neighbors=20, novelty=True, contamination='auto')
+model = LocalOutlierFactor(n_neighbors=10, novelty=True, contamination='auto')
 
 main_local_outlier_factor(dataset_train=dataset_train, model=model, scaler_model=scaler_model, window_type=WINDOW_TYPE,
-         window_size=WINDOW_SIZE, window_stride=WINDOW_STRIDE, with_pca=False, pca_components=PCA_COMPONENTS, show_plot_variance=False, dataset_eval=dataset_eval, dataset_test=dataset_test)
+         window_size=WINDOW_SIZE, window_stride=WINDOW_STRIDE, with_pca=True, pca_components=PCA_COMPONENTS, show_plot_variance=False, dataset_eval=dataset_eval, dataset_test=dataset_test)

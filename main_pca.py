@@ -11,8 +11,8 @@ from utils import *
 # CONSTANTS
 MOVING_AVG_STEP = 50
 WINDOW_TYPE = 'sliding'
-WINDOW_SIZE = 30
-WINDOW_STRIDE = 10
+WINDOW_SIZE = 70
+WINDOW_STRIDE = 30
 PCA_COMPONENTS = 7
 
 scaler_model = StandardScaler()
@@ -40,6 +40,11 @@ dataset_eval = Dataset(
 # test dataset
 t_list = [f'anomaly_{i}' for i in range(1, 11)]
 test = {}
+for t_name in t_list:
+    t = TimeSeries(t_name, auto_load=True)
+    test[t_name] = t
+
+t_list = [f'nominal_{i}' for i in range(1, 7)]
 for t_name in t_list:
     t = TimeSeries(t_name, auto_load=True)
     test[t_name] = t

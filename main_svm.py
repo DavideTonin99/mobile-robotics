@@ -50,10 +50,15 @@ for t_name in t_list:
     t = TimeSeries(t_name, auto_load=True)
     test[t_name] = t
 
+t_list = [f'nominal_{i}' for i in range(1, 7)]
+for t_name in t_list:
+    t = TimeSeries(t_name, auto_load=True)
+    test[t_name] = t
+
 dataset_test = Dataset(
     f'test {WINDOW_TYPE} window ws={WINDOW_SIZE}, stride={WINDOW_STRIDE}', time_series=test)
 
-model = OneClassSVM(nu=0.01, kernel="rbf", gamma=0.001)
+model = OneClassSVM(nu=0.01, kernel="rbf", gamma=0.0001)
 
 main_svm(dataset_train=dataset_train, model=model, scaler_model=scaler_model, window_type=WINDOW_TYPE,
-         window_size=WINDOW_SIZE, window_stride=WINDOW_STRIDE, with_pca=True, pca_components=PCA_COMPONENTS, show_plot_variance=False, dataset_eval=dataset_eval, dataset_test=dataset_test)
+         window_size=WINDOW_SIZE, window_stride=WINDOW_STRIDE, with_pca=False, pca_components=PCA_COMPONENTS, show_plot_variance=False, dataset_eval=dataset_eval, dataset_test=dataset_test)

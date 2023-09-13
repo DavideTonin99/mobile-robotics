@@ -7,14 +7,54 @@ from sklearn import metrics
 import matplotlib.ticker as mticker
 import pandas as pd
 import seaborn as sn
+import time
 
 DATA_BASE_PATH = os.path.join(os.path.dirname(
     os.path.realpath(__file__)), 'dataset')
 IMAGES_BASE_PATH = os.path.join(
     os.path.dirname(os.path.realpath(__file__)), 'images')
+STATS_BASE_PATH = os.path.join(
+    os.path.dirname(os.path.realpath(__file__)), 'stats')
 
 
-def plot_ts(title, ts, features, n_rows, n_cols, figsize=(15, 5), colors={}, markers={}, ts_name=None, show_plot=False, save_plot=False, subfolder="") -> None:
+def save_stats_txt(tp, fn, fp, tn, subfolder=None, filename=None, print_stats=False):
+    if filename is None:
+        filename = f"fname_{current_milli_time()}"
+    if subfolder is None:
+        subfolder = f"sub_{current_milli_time()}"
+
+    if not os.path.isdir(STATS_BASE_PATH):
+        os.mkdir(STATS_BASE_PATH)
+    if subfolder is not None and subfolder != "":
+        if not os.path.isdir(os.path.join(STATS_BASE_PATH, subfolder)):
+            os.mkdir(os.path.join(STATS_BASE_PATH, subfolder))
+
+    precision = tp / (tp + fp)
+    recall = tp / (tp + fn)
+    f_score = (precision * recall) / (precision + recall)
+    f_score = 2 * f_score
+
+    string_stats = (f"tp: {tp}, fn {fn}, fp {fp}, tn {tn}\n"
+                    f"precision: {precision}\n"
+                    f"recall: {recall}\n"
+                    f"fscore: {f_score}\n")
+
+    filepath = os.path.join(STATS_BASE_PATH, subfolder, filename + ".txt")
+    text_file = open(filepath, "w")
+    text_file.write(string_stats)
+    text_file.close()
+
+    if print_stats:
+        print(f"[save_stats_txt] computed stats:\n"
+              f"{string_stats}\n")
+
+
+def current_milli_time():
+    return round(time.time() * 1000)
+
+
+def plot_ts(title, ts, features, n_rows, n_cols, figsize=(15, 5), colors={}, markers={}, ts_name=None, show_plot=False,
+            save_plot=False, subfolder="") -> None:
     """
     Plot the time series
     :param title: title of the plot
@@ -92,6 +132,7 @@ def fit_pca(dataset, n_components=21, show_plot_variance=False) -> PCA:
         # plt.show()
     return pca
 
+
 # NEURAL NETWORK
 
 
@@ -132,7 +173,7 @@ def fit(model, x_training, y_training, x_eval, y_eval, optimizer, scheduler, los
                 lossE = get_loss(x_eval, y_eval, model, loss_function)
                 loss_log['t'].append(lossT)
                 loss_log['e'].append(lossE)
-                print(str(i)+'\t', round(lossT, 10),
+                print(str(i) + '\t', round(lossT, 10),
                       round(lossE, 10), sep='\t')
     return loss_log
 
@@ -158,7 +199,7 @@ def set_grid_square(axs, x_data, y_data):
     # Set limits
     ylim_max, ylim_min = max(y_data), min(y_data)
     xlim_max, xlim_min = max(x_data), min(x_data)
-    axs.axis([xlim_min-0.5, xlim_max+0.5, ylim_min-0.5, ylim_max+0.5])
+    axs.axis([xlim_min - 0.5, xlim_max + 0.5, ylim_min - 0.5, ylim_max + 0.5])
     plt.gca().set_aspect('equal', adjustable='box')
 
 

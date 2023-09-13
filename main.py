@@ -56,9 +56,10 @@ def main_pca(dataset_train, scaler_model, window_type, window_size, window_strid
     if threshold_method == 'quantile':
         pc_lower_bound, pc_upper_bound = compute_quantile_error_threshold(errors=train_errors, lower_perc=0.05, upper_perc=0.95)
     elif threshold_method == 'svm':
-        one_class_model = OneClassSVM(gamma=0.001, nu=0.01, kernel='rbf').fit(train_errors.reshape(-1, 1))
+        one_class_model = OneClassSVM(gamma="auto").fit(train_errors.reshape(-1, 1))
+        # one_class_model = OneClassSVM(gamma="scale", nu=0.01, kernel='poly').fit(train_errors.reshape(-1, 1))
     elif threshold_method == 'local_outlier_factor':
-        local_outlier_factor_model = LocalOutlierFactor(n_neighbors=20, novelty=True, contamination='auto').fit(train_errors.reshape(-1, 1))
+        local_outlier_factor_model = LocalOutlierFactor(n_neighbors=100, novelty=True, contamination='auto').fit(train_errors.reshape(-1, 1))
     
     plot_ts(title="PCA Figure Train", ts_name="train", ts={'start': dataset_train.ts_data.data, 'end': dataset_train_process.ts_data.data}, features=TimeSeriesUtils.PLOT_FEATURES,
             n_rows=2, n_cols=3, figsize=(15, 5), colors={'start': 'black', 'end': 'orange'}, save_plot=True, subfolder=f"pca_{threshold_method}")
@@ -116,6 +117,10 @@ def main_pca(dataset_train, scaler_model, window_type, window_size, window_strid
             normalizer=scaler_model, mode='single')
         dataset_test_process.remove_window(step=window_stride)
 
+        tp = 0 # true positive, i.e. truth=anomaly, prediction=anomaly (anomaly detected correctly)
+        fn = 0 # false negative, i.e. truth=anomaly, prediction=nominal (anomaly not detected)
+        fp = 0 # false positive, i.e. truth=nominal, prediction=anomaly (nominal not detected)
+        tn = 0 # true negative, i.e. truth=nominal, prediction=nominal (nominal detected correctly)
         for ts_name, ts in dataset_test_process.time_series.items():
             plot_ts(title=f"PCA Figure Test {ts_name}", ts_name=f"test_{ts_name}", ts={'start': dataset_test.time_series[ts_name].data, 'end': dataset_test_process.time_series[ts_name].data}, features=TimeSeriesUtils.PLOT_FEATURES,
                     n_rows=2, n_cols=3, figsize=(15, 5), colors={'start': 'black', 'end': 'orange'}, save_plot=True, subfolder=f"pca_{threshold_method}")
@@ -133,6 +138,17 @@ def main_pca(dataset_train, scaler_model, window_type, window_size, window_strid
             if test_anomalies_mask is not None:
                 print("test", np.count_nonzero(test_anomalies_mask))
 
+                curr_traj_predicted_anomaly = np.count_nonzero(test_anomalies_mask) > 0 # prediction
+                curr_traj_is_anomaly = "anomal" in ts_name # ground truth
+                if curr_traj_is_anomaly and curr_traj_predicted_anomaly:
+                    tp = tp + 1
+                elif curr_traj_is_anomaly and (not curr_traj_predicted_anomaly):
+                    fn = fn + 1
+                elif (not curr_traj_is_anomaly) and curr_traj_predicted_anomaly:
+                    fp = fp + 1
+                elif (not curr_traj_is_anomaly) and (not curr_traj_predicted_anomaly):
+                    tn = tn + 1
+
                 test_anomalies_mask = np.array([test_anomalies_mask]*6).T
                 anomalies = copy.deepcopy( dataset_test.time_series[ts_name].data)
                 anomalies[~test_anomalies_mask] = np.nan
@@ -140,6 +156,7 @@ def main_pca(dataset_train, scaler_model, window_type, window_size, window_strid
                 plot_ts(title=f"PCA Figure Test Anomalies {ts_name}", ts_name=f"test_anomalies_{ts_name}", ts={'time_series': dataset_test.time_series[ts_name].data, 'anomalies': anomalies}, features=TimeSeriesUtils.PLOT_FEATURES,
                     n_rows=2, n_cols=3, figsize=(15, 5), colors={'time_series': 'black', 'anomalies': 'red'}, markers={'anomalies': 'o'}, save_plot=True, subfolder=f"pca_{threshold_method}")
 
+        save_stats_txt(tp, fn, fp, tn, subfolder=f"pca_{threshold_method}", filename=None, print_stats=True)
 
 def main_nn_linear_regression(dataset_train, model, scaler_model, window_type, window_size, window_stride, device, optimizer, loss_function, epoch, scheduler=None, dataset_eval=None, dataset_test=None):
     """
@@ -196,13 +213,16 @@ def main_nn_linear_regression(dataset_train, model, scaler_model, window_type, w
         dataset_test_process.add_window(
             type='tumbling', window_size=window_size)
         dataset_test_process.normalize(normalizer=scaler_model, mode='single')
+        tp = 0  # true positive, i.e. truth=anomaly, prediction=anomaly (anomaly detected correctly)
+        fn = 0  # false negative, i.e. truth=anomaly, prediction=nominal (anomaly not detected)
+        fp = 0  # false positive, i.e. truth=nominal, prediction=anomaly (nominal not detected)
+        tn = 0  # true negative, i.e. truth=nominal, prediction=nominal (nominal detected correctly)
 
         for ts_name, t in dataset_test_process.time_series.items():
             count_windows_anomaly = 0
             errors_list = []
 
             anomalies = copy.deepcopy(dataset_test.time_series[ts_name].data)
-
             for i, row_window in enumerate(t.data):
                 row_window = np.array([row_window])
                 x = torch.from_numpy(row_window).float().to(device)
@@ -218,10 +238,23 @@ def main_nn_linear_regression(dataset_train, model, scaler_model, window_type, w
                 else:
                     anomalies[i*window_size:i*window_size + window_size] = np.nan
 
+            curr_traj_predicted_anomaly = count_windows_anomaly > 0  # prediction
+            curr_traj_is_anomaly = "anomal" in ts_name  # ground truth
+            if curr_traj_is_anomaly and curr_traj_predicted_anomaly:
+                tp = tp + 1
+            elif curr_traj_is_anomaly and (not curr_traj_predicted_anomaly):
+                fn = fn + 1
+            elif (not curr_traj_is_anomaly) and curr_traj_predicted_anomaly:
+                fp = fp + 1
+            elif (not curr_traj_is_anomaly) and (not curr_traj_predicted_anomaly):
+                tn = tn + 1
+
             plot_ts(title=f"NN Linear Regression Figure Test Anomalies {ts_name}", ts_name=f"test_anomalies_{ts_name}", ts={'time_series': dataset_test.time_series[ts_name].data, 'anomalies': anomalies}, features=TimeSeriesUtils.PLOT_FEATURES,
                 n_rows=2, n_cols=3, figsize=(15, 5), colors={'time_series': 'black', 'anomalies': 'red'}, markers={'anomalies': 'o'}, save_plot=True, subfolder="nn_linear_regression")
 
             print(f"{ts_name}: Anomalies detected: {count_windows_anomaly}, {errors_list}")
+
+        save_stats_txt(tp, fn, fp, tn, subfolder="nn_linear_regression", filename=None, print_stats=True)
 
 
 def main_svm(dataset_train, model, scaler_model, window_type, window_size, window_stride, with_pca, pca_components, show_plot_variance=True, dataset_eval=None, dataset_test=None):
@@ -301,12 +334,28 @@ def main_svm(dataset_train, model, scaler_model, window_type, window_size, windo
             # apply pca on train dataset
             dataset_test_process.pca(model=pca_model, mode='single')
 
+        tp = 0  # true positive, i.e. truth=anomaly, prediction=anomaly (anomaly detected correctly)
+        fn = 0  # false negative, i.e. truth=anomaly, prediction=nominal (anomaly not detected)
+        fp = 0  # false positive, i.e. truth=nominal, prediction=anomaly (nominal not detected)
+        tn = 0  # true negative, i.e. truth=nominal, prediction=nominal (nominal detected correctly)
+
         for ts_name, ts in dataset_test_process.time_series.items():
             one_class_predict = model.predict(ts.data) == -1
 
             test_anomalies_mask = np.array([one_class_predict]*6).T
             anomalies = copy.deepcopy(dataset_test.time_series[ts_name].data)
-            
+
+            curr_traj_predicted_anomaly = test_anomalies_mask.any()  # is anomaly prediction
+            curr_traj_is_anomaly = "anomal" in ts_name  # ground truth
+            if curr_traj_is_anomaly and curr_traj_predicted_anomaly:
+                tp = tp + 1
+            elif curr_traj_is_anomaly and (not curr_traj_predicted_anomaly):
+                fn = fn + 1
+            elif (not curr_traj_is_anomaly) and curr_traj_predicted_anomaly:
+                fp = fp + 1
+            elif (not curr_traj_is_anomaly) and (not curr_traj_predicted_anomaly):
+                tn = tn + 1
+
             for i in range(len(one_class_predict)):
                 if not one_class_predict[i]:
                     anomalies[i*window_size:i*window_size + window_size] = np.nan
@@ -314,6 +363,7 @@ def main_svm(dataset_train, model, scaler_model, window_type, window_size, windo
             plot_ts(title=f"OneClass SVM {'PCA' if with_pca else 'NO PCA'} Figure Test Anomalies {ts_name}", ts_name=f"test_anomalies_{ts_name}", ts={'time_series': dataset_test.time_series[ts_name].data, 'anomalies': anomalies}, features=TimeSeriesUtils.PLOT_FEATURES,
                 n_rows=2, n_cols=3, figsize=(15, 5), colors={'time_series': 'black', 'anomalies': 'red'}, markers={'anomalies': 'o'}, save_plot=True, subfolder=f"svm_{'pca' if with_pca else 'no_pca'}")
 
+        save_stats_txt(tp, fn, fp, tn, subfolder=f"svm_{'pca' if with_pca else 'no_pca'}", filename=None, print_stats=True)
 
 def main_local_outlier_factor(dataset_train, model, scaler_model, window_type, window_size, window_stride, with_pca, pca_components, show_plot_variance=True, dataset_eval=None, dataset_test=None):
     """
@@ -382,6 +432,7 @@ def main_local_outlier_factor(dataset_train, model, scaler_model, window_type, w
             plot_ts(title=f"Local Outlier Factor {'PCA' if with_pca else 'NO PCA'} Figure Eval Anomalies {ts_name}", ts_name=f"eval_anomalies_{ts_name}", ts={'time_series': dataset_eval.time_series[ts_name].data, 'anomalies': anomalies}, features=TimeSeriesUtils.PLOT_FEATURES,
                 n_rows=2, n_cols=3, figsize=(15, 5), colors={'time_series': 'black', 'anomalies': 'red'}, markers={'anomalies': 'o'}, save_plot=True, subfolder=f"local_outlier_{'pca' if with_pca else 'no_pca'}")
 
+
     # TEST SECTION
     if dataset_test is not None:
         dataset_test_process.add_window(
@@ -391,6 +442,11 @@ def main_local_outlier_factor(dataset_train, model, scaler_model, window_type, w
         if with_pca:
             # apply pca on train dataset
             dataset_test_process.pca(model=pca_model, mode='single')
+
+        tp = 0  # true positive, i.e. truth=anomaly, prediction=anomaly (anomaly detected correctly)
+        fn = 0  # false negative, i.e. truth=anomaly, prediction=nominal (anomaly not detected)
+        fp = 0  # false positive, i.e. truth=nominal, prediction=anomaly (nominal not detected)
+        tn = 0  # true negative, i.e. truth=nominal, prediction=nominal (nominal detected correctly)
 
         for ts_name, ts in dataset_test_process.time_series.items():
             one_class_predict = model.predict(ts.data) == -1
@@ -402,5 +458,18 @@ def main_local_outlier_factor(dataset_train, model, scaler_model, window_type, w
                 if not one_class_predict[i]:
                     anomalies[i*window_size:i*window_size + window_size] = np.nan
 
+            curr_traj_predicted_anomaly = test_anomalies_mask.any()  # is anomaly prediction
+            curr_traj_is_anomaly = "anomal" in ts_name  # ground truth
+            if curr_traj_is_anomaly and curr_traj_predicted_anomaly:
+                tp = tp + 1
+            elif curr_traj_is_anomaly and (not curr_traj_predicted_anomaly):
+                fn = fn + 1
+            elif (not curr_traj_is_anomaly) and curr_traj_predicted_anomaly:
+                fp = fp + 1
+            elif (not curr_traj_is_anomaly) and (not curr_traj_predicted_anomaly):
+                tn = tn + 1
+
             plot_ts(title=f"Local Outlier Factor {'PCA' if with_pca else 'NO PCA'} Figure Test Anomalies {ts_name}", ts_name=f"test_anomalies_{ts_name}", ts={'time_series': dataset_test.time_series[ts_name].data, 'anomalies': anomalies}, features=TimeSeriesUtils.PLOT_FEATURES,
                 n_rows=2, n_cols=3, figsize=(15, 5), colors={'time_series': 'black', 'anomalies': 'red'}, markers={'anomalies': 'o'}, save_plot=True, subfolder=f"local_outlier_{'pca' if with_pca else 'no_pca'}")
+
+        save_stats_txt(tp, fn, fp, tn, subfolder=f"local_outlier_{'pca' if with_pca else 'no_pca'}", filename=None, print_stats=True)
