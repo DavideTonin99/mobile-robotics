@@ -101,7 +101,6 @@ def main_pca(dataset_train, scaler_model, window_type, window_size, window_strid
             
                 plot_ts(title=f"PCA Figure Eval Anomalies {ts_name}", ts_name=f"eval_anomalies_{ts_name}", ts={'time_series': dataset_eval.time_series[ts_name].data, 'anomalies': anomalies}, features=TimeSeriesUtils.PLOT_FEATURES,
                         n_rows=2, n_cols=3, figsize=(15, 5), colors={'time_series': 'black', 'anomalies': 'red'}, markers={'anomalies': 'o'}, save_plot=True, subfolder=f"pca_{threshold_method}")
-
     # TEST SECTION
     if dataset_test is not None:
         dataset_test_process.add_window(
@@ -155,6 +154,8 @@ def main_pca(dataset_train, scaler_model, window_type, window_size, window_strid
 
                 plot_ts(title=f"PCA Figure Test Anomalies {ts_name}", ts_name=f"test_anomalies_{ts_name}", ts={'time_series': dataset_test.time_series[ts_name].data, 'anomalies': anomalies}, features=TimeSeriesUtils.PLOT_FEATURES,
                     n_rows=2, n_cols=3, figsize=(15, 5), colors={'time_series': 'black', 'anomalies': 'red'}, markers={'anomalies': 'o'}, save_plot=True, subfolder=f"pca_{threshold_method}")
+
+                plot_scatter(timeseries_1=dataset_test.time_series[ts_name].data, timeseries_2=anomalies, subfolder=f"pca_{threshold_method}", filename=ts_name, save_plot=True, show_plot=False, verbose=True)
 
         save_stats_txt(tp, fn, fp, tn, subfolder=f"pca_{threshold_method}", filename=None, print_stats=True)
 
@@ -251,6 +252,7 @@ def main_nn_linear_regression(dataset_train, model, scaler_model, window_type, w
 
             plot_ts(title=f"NN Linear Regression Figure Test Anomalies {ts_name}", ts_name=f"test_anomalies_{ts_name}", ts={'time_series': dataset_test.time_series[ts_name].data, 'anomalies': anomalies}, features=TimeSeriesUtils.PLOT_FEATURES,
                 n_rows=2, n_cols=3, figsize=(15, 5), colors={'time_series': 'black', 'anomalies': 'red'}, markers={'anomalies': 'o'}, save_plot=True, subfolder="nn_linear_regression")
+            plot_scatter(timeseries_1=dataset_test.time_series[ts_name].data, timeseries_2=anomalies, subfolder="nn_linear_regression", filename=ts_name, save_plot=True, show_plot=False, verbose=True)
 
             print(f"{ts_name}: Anomalies detected: {count_windows_anomaly}, {errors_list}")
 
@@ -362,6 +364,7 @@ def main_svm(dataset_train, model, scaler_model, window_type, window_size, windo
 
             plot_ts(title=f"OneClass SVM {'PCA' if with_pca else 'NO PCA'} Figure Test Anomalies {ts_name}", ts_name=f"test_anomalies_{ts_name}", ts={'time_series': dataset_test.time_series[ts_name].data, 'anomalies': anomalies}, features=TimeSeriesUtils.PLOT_FEATURES,
                 n_rows=2, n_cols=3, figsize=(15, 5), colors={'time_series': 'black', 'anomalies': 'red'}, markers={'anomalies': 'o'}, save_plot=True, subfolder=f"svm_{'pca' if with_pca else 'no_pca'}")
+            plot_scatter(timeseries_1=dataset_test.time_series[ts_name].data, timeseries_2=anomalies, subfolder=f"svm_{'pca' if with_pca else 'no_pca'}", filename=ts_name, save_plot=True, show_plot=False, verbose=True)
 
         save_stats_txt(tp, fn, fp, tn, subfolder=f"svm_{'pca' if with_pca else 'no_pca'}", filename=None, print_stats=True)
 
@@ -471,5 +474,6 @@ def main_local_outlier_factor(dataset_train, model, scaler_model, window_type, w
 
             plot_ts(title=f"Local Outlier Factor {'PCA' if with_pca else 'NO PCA'} Figure Test Anomalies {ts_name}", ts_name=f"test_anomalies_{ts_name}", ts={'time_series': dataset_test.time_series[ts_name].data, 'anomalies': anomalies}, features=TimeSeriesUtils.PLOT_FEATURES,
                 n_rows=2, n_cols=3, figsize=(15, 5), colors={'time_series': 'black', 'anomalies': 'red'}, markers={'anomalies': 'o'}, save_plot=True, subfolder=f"local_outlier_{'pca' if with_pca else 'no_pca'}")
+            plot_scatter(timeseries_1=dataset_test.time_series[ts_name].data, timeseries_2=anomalies, subfolder=f"local_outlier_{'pca' if with_pca else 'no_pca'}", filename=ts_name, save_plot=True, show_plot=False, verbose=True)
 
         save_stats_txt(tp, fn, fp, tn, subfolder=f"local_outlier_{'pca' if with_pca else 'no_pca'}", filename=None, print_stats=True)

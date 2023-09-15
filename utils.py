@@ -17,42 +17,7 @@ STATS_BASE_PATH = os.path.join(
     os.path.dirname(os.path.realpath(__file__)), 'stats')
 
 
-def save_stats_txt(tp, fn, fp, tn, subfolder=None, filename=None, print_stats=False):
-    if filename is None:
-        filename = f"fname_{current_milli_time()}"
-    if subfolder is None:
-        subfolder = f"sub_{current_milli_time()}"
-
-    if not os.path.isdir(STATS_BASE_PATH):
-        os.mkdir(STATS_BASE_PATH)
-    if subfolder is not None and subfolder != "":
-        if not os.path.isdir(os.path.join(STATS_BASE_PATH, subfolder)):
-            os.mkdir(os.path.join(STATS_BASE_PATH, subfolder))
-
-    precision = tp / (tp + fp)
-    recall = tp / (tp + fn)
-    f_score = (precision * recall) / (precision + recall)
-    f_score = 2 * f_score
-
-    string_stats = (f"tp: {tp}, fn {fn}, fp {fp}, tn {tn}\n"
-                    f"precision: {precision}\n"
-                    f"recall: {recall}\n"
-                    f"fscore: {f_score}\n")
-
-    filepath = os.path.join(STATS_BASE_PATH, subfolder, filename + ".txt")
-    text_file = open(filepath, "w")
-    text_file.write(string_stats)
-    text_file.close()
-
-    if print_stats:
-        print(f"[save_stats_txt] computed stats:\n"
-              f"{string_stats}\n")
-
-
-def current_milli_time():
-    return round(time.time() * 1000)
-
-
+# plot
 def plot_ts(title, ts, features, n_rows, n_cols, figsize=(15, 5), colors={}, markers={}, ts_name=None, show_plot=False,
             save_plot=False, subfolder="") -> None:
     """
@@ -105,6 +70,112 @@ def plot_ts(title, ts, features, n_rows, n_cols, figsize=(15, 5), colors={}, mar
 
     if show_plot:
         plt.show()
+
+
+def plot_scatter(timeseries_1=None, timeseries_2=None, filename=None, subfolder=None, save_plot=False, show_plot=False, verbose=False):
+    '''
+    plotta x, y, theta in 2D plot
+    :param timeseries_1: array dati (n righe, 6 colonne)
+    :param timeseries_2: array dati (n righe, 6 colonne)
+    :return: none
+    '''
+
+    x_1 = timeseries_1[:, 0]
+    y_1 = timeseries_1[:, 1]
+
+    fig, axs = plt.subplots()
+    axs.set_title(filename)
+    axs.plot(x_1, y_1, color="blue")
+
+    if timeseries_2 is not None:
+        x_2 = timeseries_2[:, 0]
+        y_2 = timeseries_2[:, 1]
+        axs.plot(x_2, y_2, color="red")
+
+    set_grid_square(axs, x_1, y_1)
+    plt.grid()
+
+    if show_plot:
+        plt.show()
+
+    if save_plot:
+        if not os.path.isdir(IMAGES_BASE_PATH):
+            os.mkdir(IMAGES_BASE_PATH)
+        if subfolder is not None and subfolder != "":
+            if not os.path.isdir(os.path.join(IMAGES_BASE_PATH, subfolder)):
+                os.mkdir(os.path.join(IMAGES_BASE_PATH, subfolder))
+
+        image_path = os.path.join(IMAGES_BASE_PATH, subfolder, f"map_{filename}.png")
+        fig.savefig(image_path)
+
+        if verbose:
+            print(f"[plot_scatter] image saved at {image_path}")
+
+    plt.cla()
+    plt.close(fig)
+
+def plot_arrows(timeseries_1, timeseries_2):
+    '''
+    come plot_scatter però plotta freccie invece che punti
+    l'orientamento della freccia viene dal parametro theta
+    :param timeseries_1:
+    :param timeseries_2:
+    :return:
+    '''
+    x_1 = timeseries_1.iloc[:, 0]
+    y_1 = timeseries_1.iloc[:, 1]
+    theta_1_cos = np.cos(np.array(timeseries_1.iloc[:, 2]))
+    theta_1_sin = np.sin(np.array(timeseries_1.iloc[:, 2]))
+
+    x_2 = timeseries_2.iloc[:, 0]
+    y_2 = timeseries_2.iloc[:, 1]
+    theta_2_cos = np.cos(np.array(timeseries_2.iloc[:, 2]))
+    theta_2_sin = np.sin(np.array(timeseries_2.iloc[:, 2]))
+
+    fig, axs = plt.subplots()
+    axs.set_title("banana")
+
+    axs.quiver(x_1, y_1, theta_1_cos, theta_1_sin, width=0.001, color="blue")
+    axs.quiver(x_2, y_2, theta_2_cos, theta_2_sin, width=0.001, color="red")
+
+    set_grid_square(axs, x_1, y_1)
+    plt.grid()
+    plt.show()
+
+def save_stats_txt(tp, fn, fp, tn, subfolder=None, filename=None, print_stats=False):
+    if filename is None:
+        filename = f"fname_{current_milli_time()}"
+    if subfolder is None:
+        subfolder = f"sub_{current_milli_time()}"
+
+    if not os.path.isdir(STATS_BASE_PATH):
+        os.mkdir(STATS_BASE_PATH)
+    if subfolder is not None and subfolder != "":
+        if not os.path.isdir(os.path.join(STATS_BASE_PATH, subfolder)):
+            os.mkdir(os.path.join(STATS_BASE_PATH, subfolder))
+
+    precision = tp / (tp + fp)
+    recall = tp / (tp + fn)
+    f_score = (precision * recall) / (precision + recall)
+    f_score = 2 * f_score
+
+    string_stats = (f"tp: {tp}, fn {fn}, fp {fp}, tn {tn}\n"
+                    f"precision: {precision}\n"
+                    f"recall: {recall}\n"
+                    f"fscore: {f_score}\n")
+
+    filepath = os.path.join(STATS_BASE_PATH, subfolder, filename + ".txt")
+    text_file = open(filepath, "w")
+    text_file.write(string_stats)
+    text_file.close()
+
+    if print_stats:
+        print(f"[save_stats_txt] computed stats:\n"
+              f"{string_stats}\n")
+
+
+def current_milli_time():
+    return round(time.time() * 1000)
 
 
 def fit_pca(dataset, n_components=21, show_plot_variance=False) -> PCA:
@@ -201,61 +272,6 @@ def set_grid_square(axs, x_data, y_data):
     xlim_max, xlim_min = max(x_data), min(x_data)
     axs.axis([xlim_min - 0.5, xlim_max + 0.5, ylim_min - 0.5, ylim_max + 0.5])
     plt.gca().set_aspect('equal', adjustable='box')
-
-
-def plot_arrows(timeseries_1, timeseries_2):
-    '''
-    come plot_scatter però plotta freccie invece che punti
-    l'orientamento della freccia viene dal parametro theta
-    :param timeseries_1:
-    :param timeseries_2:
-    :return:
-    '''
-    x_1 = timeseries_1.iloc[:, 0]
-    y_1 = timeseries_1.iloc[:, 1]
-    theta_1_cos = np.cos(np.array(timeseries_1.iloc[:, 2]))
-    theta_1_sin = np.sin(np.array(timeseries_1.iloc[:, 2]))
-
-    x_2 = timeseries_2.iloc[:, 0]
-    y_2 = timeseries_2.iloc[:, 1]
-    theta_2_cos = np.cos(np.array(timeseries_2.iloc[:, 2]))
-    theta_2_sin = np.sin(np.array(timeseries_2.iloc[:, 2]))
-
-    fig, axs = plt.subplots()
-    axs.set_title("banana")
-
-    axs.quiver(x_1, y_1, theta_1_cos, theta_1_sin, width=0.001, color="blue")
-    axs.quiver(x_2, y_2, theta_2_cos, theta_2_sin, width=0.001, color="red")
-
-    set_grid_square(axs, x_1, y_1)
-    plt.grid()
-    plt.show()
-
-
-def plot_scatter(timeseries_1=None, timeseries_2=None):
-    '''
-    plotta x, y, theta in 2D plot
-    :param timeseries_1: array dati (n righe, 6 colonne)
-    :param timeseries_2: array dati (n righe, 6 colonne)
-    :return: none
-    '''
-
-    x_1 = timeseries_1[:, 0]
-    y_1 = timeseries_1[:, 1]
-    theta_1 = timeseries_1[:, 2]
-
-    fig, axs = plt.subplots()
-    axs.set_title("banana")
-    axs.plot(x_1, y_1, color="blue")
-    if timeseries_2 is not None:
-        x_2 = timeseries_2[:, 0]
-        y_2 = timeseries_2[:, 1]
-        theta_2 = timeseries_2[:, 2]
-        axs.plot(x_2, y_2, color="red")
-
-    set_grid_square(axs, x_1, y_1)
-    plt.grid()
-    plt.show()
 
 
 def test_sklearn(y_true, y_pred):
