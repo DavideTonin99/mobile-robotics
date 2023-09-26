@@ -23,15 +23,30 @@ params = Params({
     'QUANTILE_LOWER_PERCENTAGE': 0.01,
     'QUANTILE_UPPER_PERCENTAGE': 0.99,
 })
-
+"""
+print("Exec PCA with svm")
 main = MainPCA(params=params)
 main.run(train_list=train_list, eval_list=[], test_list=test_list, show_plot=True)
 
+print("Exec PCA with local outlier factor")
+params.THRESHOLD_TYPE = 'local_outlier_factor'
+main = MainPCA(params=params)
+main.run(train_list=train_list, eval_list=[], test_list=test_list, show_plot=True)
+
+print("Exec PCA with quantile")
+params.THRESHOLD_TYPE = 'quantile'
+main = MainPCA(params=params)
+main.run(train_list=train_list, eval_list=[], test_list=test_list, show_plot=True)
+
+print("Exec NN Linear Regression")
 main = MainNNLinearRegression(params=params)
 main.run(train_list=train_list, eval_list=eval_list, test_list=test_list, show_plot=True)
 
+print("Exec Local Outlier Factor")
 main = MainLocalOutlierFactor(params=params)
 main.run(train_list=train_list, eval_list=[], test_list=test_list, show_plot=True)
-
+"""
+print("Exec SVM")
+train_list_svm = train_list + [f'anomaly_{i}' for i in range(10, 11)]
 main = MainSVM(params=params)
-main.run(train_list=train_list, eval_list=[], test_list=test_list, show_plot=True)
+main.run(train_list=train_list_svm, eval_list=[], test_list=test_list, show_plot=True)

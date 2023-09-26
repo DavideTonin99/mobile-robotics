@@ -37,7 +37,7 @@ class MainSVM(Main):
         super().__init__(params)
 
         for key, value in MainSVM.DEFAULT_PARAMS.items():
-            if not hasattr(self.params, key):
+            if not hasattr(self.params, key) or getattr(self.params, key) is None:
                 setattr(self.params, key, value)
 
         self.pca_model = None
@@ -75,9 +75,9 @@ class MainSVM(Main):
         tn = 0
 
         for ts_name, ts in self.dataset_test.time_series.items():
-            ts_pred = self.dataset_test_process.time_series[ts_name]
+            ts_process = self.dataset_test_process.time_series[ts_name]
 
-            predict = self.model.predict(ts.data) == -1
+            predict = self.model.predict(ts_process.data) == -1
 
             test_anomalies_mask = np.array([predict] * 6).T
             anomalies = copy.deepcopy(ts.data)

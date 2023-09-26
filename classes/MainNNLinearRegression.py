@@ -26,7 +26,7 @@ class MainNNLinearRegression(Main):
         'APPLY_PCA': True,
         'PCA_COMPONENTS': 7,
         'NORMALIZER_MODEL': StandardScaler(),
-        'N_EPOC': 1000
+        'N_EPOCH': 25000
     }
 
     def __init__(self, params: Params = None, device: str = "cpu") -> None:
@@ -40,7 +40,7 @@ class MainNNLinearRegression(Main):
         super().__init__(params)
 
         for key, value in MainNNLinearRegression.DEFAULT_PARAMS.items():
-            if not hasattr(self.params, key):
+            if not hasattr(self.params, key) or getattr(self.params, key) is None:
                 setattr(self.params, key, value)
 
         self.ad_params = {}
@@ -86,12 +86,12 @@ class MainNNLinearRegression(Main):
         tn = 0
 
         for ts_name, ts in self.dataset_test.time_series.items():
-            ts_pred = self.dataset_test_process.time_series[ts_name]
+            ts_process = self.dataset_test_process.time_series[ts_name]
             count_windows_anomaly = 0
             errors_list = []
 
             anomalies = copy.deepcopy(ts.data)
-            for i, row_window in enumerate(ts_pred.data):
+            for i, row_window in enumerate(ts_process.data):
                 row_window = np.array([row_window])
                 x = torch.from_numpy(row_window).float().to(self.device)
                 y = torch.from_numpy(row_window).float().to(self.device)
@@ -124,9 +124,12 @@ class MainNNLinearRegression(Main):
                     features=TimeSeriesUtils.PLOT_FEATURES,
                     n_rows=2, n_cols=3, figsize=(15, 5), colors={'time_series': 'black', 'anomalies': 'red'},
                     markers={'anomalies': 'o'}, save_plot=True, subfolder="nn_linear_regression")
-            plot_scatter(timeseries_1=ts.data, timeseries_2=anomalies,
-                         subfolder="nn_linear_regression", filename=ts_name, save_plot=True, show_plot=False,
-                         verbose=True)
+            try:
+                plot_scatter(timeseries_1=ts.data, timeseries_2=anomalies,
+                             subfolder="nn_linear_regression", filename=ts_name, save_plot=True, show_plot=False,
+                             verbose=True)
+            except Exception as e:
+                pass
 
             print(
                 f"{ts_name}: Anomalies detected: {count_windows_anomaly}, {errors_list}")
@@ -140,7 +143,7 @@ class MainNNLinearRegression(Main):
         if train_list is not None and len(train_list) > 0:
             super().pre_train(t_list=train_list)
             if eval_list is not None and len(eval_list) > 0:
-                super().pre_test(t_list=eval_list, prefix='eval')
+                super().pre_train(t_list=eval_list, prefix='eval')
             self.train()
         if test_list is not None and len(test_list) > 0:
             self.dataset_test = None

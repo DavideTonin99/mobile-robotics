@@ -86,7 +86,7 @@ class Main(ABC):
 
         return [dataset, dataset_process]
 
-    def pre_train(self, t_list: list = None) -> None:
+    def pre_train(self, t_list: list = None, prefix: str = 'train') -> None:
         """
         Train the model
         @param t_list: list of training time series
@@ -94,9 +94,12 @@ class Main(ABC):
         if t_list is None:
             t_list = []
         data = self.load_data(t_list=t_list, params=self.params)
-        name = self.get_dataset_name(prefix='train')
+        name = self.get_dataset_name(prefix=prefix)
 
-        self.dataset_train, self.dataset_train_process = self.prepare_dataset(name=name, data=data, is_train=True)
+        if prefix == 'train':
+            self.dataset_train, self.dataset_train_process = self.prepare_dataset(name=name, data=data, is_train=True)
+        else:
+            self.dataset_eval, self.dataset_eval_process = self.prepare_dataset(name=name, data=data, is_train=True)
 
     def pre_test(self, t_list: list = None, prefix: str = 'test') -> None:
         """

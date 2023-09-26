@@ -39,7 +39,7 @@ class MainPCA(Main):
         super().__init__(params)
 
         for key, value in MainPCA.DEFAULT_PARAMS.items():
-            if not hasattr(self.params, key):
+            if not hasattr(self.params, key) or getattr(self.params, key) is None:
                 setattr(self.params, key, value)
 
         self.pca_model = None

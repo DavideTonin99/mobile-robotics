@@ -37,7 +37,7 @@ class MainLocalOutlierFactor(Main):
         super().__init__(params)
 
         for key, value in MainLocalOutlierFactor.DEFAULT_PARAMS.items():
-            if not hasattr(self.params, key):
+            if not hasattr(self.params, key) or getattr(self.params, key) is None:
                 setattr(self.params, key, value)
 
         self.pca_model = None
@@ -75,9 +75,9 @@ class MainLocalOutlierFactor(Main):
         tn = 0
 
         for ts_name, ts in self.dataset_test.time_series.items():
-            ts_pred = self.dataset_test_process.time_series[ts_name]
+            ts_process = self.dataset_test_process.time_series[ts_name]
 
-            predict = self.model.predict(ts.data) == -1
+            predict = self.model.predict(ts_process.data) == -1
 
             test_anomalies_mask = np.array([predict] * 6).T
             anomalies = copy.deepcopy(ts.data)
@@ -85,7 +85,7 @@ class MainLocalOutlierFactor(Main):
             for i in range(len(predict)):
                 if not predict[i]:
                     anomalies[
-                        i * self.params.WINDOW_SIZE:i * self.params.WINDOW_STRIDE + self.params.WINDOW_SIZE] = np.nan
+                    i * self.params.WINDOW_SIZE:i * self.params.WINDOW_STRIDE + self.params.WINDOW_SIZE] = np.nan
 
             curr_traj_predicted_anomaly = test_anomalies_mask.any()  # is anomaly prediction
             curr_traj_is_anomaly = "anomal" in ts_name  # ground truth
@@ -108,7 +108,8 @@ class MainLocalOutlierFactor(Main):
                 subfolder=f"local_outlier_{'pca' if self.params.APPLY_PCA else 'no_pca'}")
             try:
                 plot_scatter(timeseries_1=ts.data, timeseries_2=anomalies,
-                             subfolder=f"local_outlier_{'pca' if self.params.APPLY_PCA else 'no_pca'}", filename=ts_name,
+                             subfolder=f"local_outlier_{'pca' if self.params.APPLY_PCA else 'no_pca'}",
+                             filename=ts_name,
                              save_plot=True,
                              show_plot=False, verbose=True)
             except Exception as e:
