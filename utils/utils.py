@@ -10,11 +10,11 @@ import seaborn as sn
 import time
 
 DATA_BASE_PATH = os.path.join(os.path.dirname(
-    os.path.realpath(__file__)), 'dataset')
+    os.path.realpath(__file__)), '../dataset')
 IMAGES_BASE_PATH = os.path.join(
-    os.path.dirname(os.path.realpath(__file__)), 'images')
+    os.path.dirname(os.path.realpath(__file__)), '../images')
 STATS_BASE_PATH = os.path.join(
-    os.path.dirname(os.path.realpath(__file__)), 'stats')
+    os.path.dirname(os.path.realpath(__file__)), '../stats')
 
 
 # plot
@@ -54,7 +54,6 @@ def plot_ts(title, ts, features, n_rows, n_cols, figsize=(15, 5), colors={}, mar
             col += 1
             feature_index += 1
         row += 1
-    plt.show()
 
     if save_plot:
         if not os.path.isdir(IMAGES_BASE_PATH):
@@ -71,7 +70,8 @@ def plot_ts(title, ts, features, n_rows, n_cols, figsize=(15, 5), colors={}, mar
         plt.close(fig)
 
     if show_plot:
-        plt.show()
+        #plt.show()
+        pass
 
 
 def plot_scatter(timeseries_1=None, timeseries_2=None, filename=None, subfolder=None, save_plot=False, show_plot=False,
@@ -160,9 +160,13 @@ def save_stats_txt(tp, fn, fp, tn, subfolder=None, filename=None, print_stats=Fa
         if not os.path.isdir(os.path.join(STATS_BASE_PATH, subfolder)):
             os.mkdir(os.path.join(STATS_BASE_PATH, subfolder))
 
-    precision = tp / (tp + fp)
-    recall = tp / (tp + fn)
-    f_score = (precision * recall) / (precision + recall)
+    precision = recall = f_score = 0
+    if tp + fp != 0:
+        precision = tp / (tp + fp)
+    if tp + fn != 0:
+        recall = tp / (tp + fn)
+    if precision + recall != 0:
+        f_score = (precision * recall) / (precision + recall)
     f_score = 2 * f_score
 
     string_stats = (f"tp: {tp}, fn {fn}, fp {fp}, tn {tn}\n"
@@ -345,3 +349,17 @@ def compute_quantile_error_threshold(errors, lower_perc, upper_perc):
     upper_bound = q2 + (1 * pc_iqr)
 
     return [lower_bound, upper_bound]
+
+
+def compute_errors(ts_true: np.array, ts_pred: np.array, calc_abs: bool = True) -> np.array:
+    """
+    Compute the errors between the true dataset and the predicted dataset
+    @param ts_true: true data
+    @param ts_pred: predicted data
+    @param calc_abs: if True compute the absolute value of the errors
+    @return: errors
+    """
+    errors = ts_pred - ts_true
+    if calc_abs:
+        errors = np.abs(errors)
+    return errors

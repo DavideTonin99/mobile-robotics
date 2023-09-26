@@ -1,5 +1,5 @@
-from TimeSeriesUtils import *
-from utils import *
+from models.TimeSeriesUtils import *
+from utils.utils import *
 
 
 class TimeSeries:
@@ -15,7 +15,9 @@ class TimeSeries:
         Exception: data not specified
         """
         self.name = name
+        self.window_type = None
         self.window_size = None
+        self.window_stride = None
 
         if data is None and not auto_load:
             raise Exception("Data not specified and auto_load is False")
@@ -38,43 +40,71 @@ class TimeSeries:
         """
         self.data = TimeSeriesUtils.ts_moving_average(self.data, step)
 
-    def add_window(self, type="sliding", window_size=None, stride=1) -> None:
+    def prepare_for_window(self, window_type: str, window_size: int, window_stride: int) -> None:
+        """
+        Prepare the time series for a window
+        @param window_type: type of window to add ("sliding" | "tumbling")
+        @param window_size: size of the window
+        @param window_stride: stride of the window
+        """
+        self.window_type = window_type
+        self.window_size = window_size
+        self.window_stride = window_stride
+
+        self.add_window(window_type=window_type, window_size=window_size, window_stride=window_stride)
+
+        step = self.window_stride
+        if step == 'tumbling':
+            step = self.window_size
+        self.remove_window(step=step)
+
+    def add_window(self, window_type="sliding", window_size=None, window_stride=1) -> None:
         """
         Add a window to the time series
-        :param type: type of window to add ("sliding" | "tumbling")
+        :param window_type: type of window to add ("sliding" | "tumbling")
         :param window_size: size of the window
-        Exception: window type not supported
+        :param window_stride: stride of the window
+        :raise Exception: window type not supported
         """
-        if window_size is not None:
-            self.window_size = window_size
+        if window_type != "sliding" and window_type != "tumbling":
+            raise Exception("Window type not supported")
+        if window_size is None or window_size <= 0:
+            raise Exception("Window size not specified or negative")
 
-            if type != "sliding" and type != "tumbling":
-                raise Exception("Window type not supported")
+        self.window_type = window_type
+        self.window_size = window_size
+        self.window_stride = window_stride
 
-            while len(self.data) % self.window_size != 0:
-                self.data = self.data[:-1]
+        while len(self.data) % self.window_size != 0:
+            self.data = self.data[:-1]
 
-            if type == "sliding":
-                self.sliding_window(window_size, stride)
-            elif type == "tumbling":
-                self.tumbling_window(window_size)
-        else:
-            raise Exception("Window size not specified")
+        if window_type == "sliding":
+            self.sliding_window(window_size, window_stride)
+        elif window_type == "tumbling":
+            self.tumbling_window(window_size)
 
-    def sliding_window(self, window_size=None, stride=1) -> None:
+    def sliding_window(self, window_size=None, window_stride=1) -> None:
         """
         Add a sliding window to the time series
         :param window_size: size of the window
-        :param stride: stride of the window
+        :param window_stride: stride of the window
         """
+        self.window_type = 'sliding'
+        self.window_size = window_size
+        self.window_stride = window_stride
+
         self.data = TimeSeriesUtils.ts_sliding_window(
-            self.data, window_size, stride)
+            self.data, window_size, window_stride)
 
     def tumbling_window(self, window_size=None) -> None:
         """
         Add a tumbling window to the time series
         :param window_size: size of the window
         """
+        self.window_type = 'tumbling'
+        self.window_size = window_size
+        self.window_stride = window_size
+
         self.data = TimeSeriesUtils.ts_tumbling_window(
             self.data, window_size)
 
