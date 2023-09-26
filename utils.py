@@ -54,6 +54,7 @@ def plot_ts(title, ts, features, n_rows, n_cols, figsize=(15, 5), colors={}, mar
             col += 1
             feature_index += 1
         row += 1
+    plt.show()
 
     if save_plot:
         if not os.path.isdir(IMAGES_BASE_PATH):
@@ -62,7 +63,8 @@ def plot_ts(title, ts, features, n_rows, n_cols, figsize=(15, 5), colors={}, mar
             if not os.path.isdir(os.path.join(IMAGES_BASE_PATH, subfolder)):
                 os.mkdir(os.path.join(IMAGES_BASE_PATH, subfolder))
 
-        image_path = os.path.join(IMAGES_BASE_PATH, subfolder, f"{ts_name}.png")
+        image_path = os.path.join(
+            IMAGES_BASE_PATH, subfolder, f"{ts_name}.png")
         fig.savefig(image_path)
 
         plt.cla()
@@ -72,7 +74,8 @@ def plot_ts(title, ts, features, n_rows, n_cols, figsize=(15, 5), colors={}, mar
         plt.show()
 
 
-def plot_scatter(timeseries_1=None, timeseries_2=None, filename=None, subfolder=None, save_plot=False, show_plot=False, verbose=False):
+def plot_scatter(timeseries_1=None, timeseries_2=None, filename=None, subfolder=None, save_plot=False, show_plot=False,
+                 verbose=False):
     '''
     plotta x, y, theta in 2D plot
     :param timeseries_1: array dati (n righe, 6 colonne)
@@ -105,7 +108,8 @@ def plot_scatter(timeseries_1=None, timeseries_2=None, filename=None, subfolder=
             if not os.path.isdir(os.path.join(IMAGES_BASE_PATH, subfolder)):
                 os.mkdir(os.path.join(IMAGES_BASE_PATH, subfolder))
 
-        image_path = os.path.join(IMAGES_BASE_PATH, subfolder, f"map_{filename}.png")
+        image_path = os.path.join(
+            IMAGES_BASE_PATH, subfolder, f"map_{filename}.png")
         fig.savefig(image_path)
 
         if verbose:
@@ -113,6 +117,7 @@ def plot_scatter(timeseries_1=None, timeseries_2=None, filename=None, subfolder=
 
     plt.cla()
     plt.close(fig)
+
 
 def plot_arrows(timeseries_1, timeseries_2):
     '''
@@ -141,6 +146,7 @@ def plot_arrows(timeseries_1, timeseries_2):
     set_grid_square(axs, x_1, y_1)
     plt.grid()
     plt.show()
+
 
 def save_stats_txt(tp, fn, fp, tn, subfolder=None, filename=None, print_stats=False):
     if filename is None:
@@ -222,7 +228,8 @@ def get_loss(x, y, model, loss_function):
     return loss.item()
 
 
-def fit(model, x_training, y_training, x_eval, y_eval, optimizer, scheduler, loss_function, epoch=10, print_epoch=True):
+def fit_nn_regression(model, x_training, y_training, x_eval, y_eval, optimizer, scheduler, loss_function, epoch=10,
+                      print_epoch=True):
     loss_log = {'t': [], 'e': []}
     if print_epoch:
         print('Epoch', 'loss training', 'loss evaluation', sep='\t\t')

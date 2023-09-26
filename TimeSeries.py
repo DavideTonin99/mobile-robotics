@@ -15,12 +15,13 @@ class TimeSeries:
         Exception: data not specified
         """
         self.name = name
+        self.window_size = None
 
         if data is None and not auto_load:
             raise Exception("Data not specified and auto_load is False")
 
         if auto_load:
-            data = TimeSeriesUtils._load_from_features_csv(
+            data = TimeSeriesUtils.ts_load_from_features_csv(
                 name, DATA_BASE_PATH)
         self.data = data
 
@@ -35,15 +36,7 @@ class TimeSeries:
         Apply moving average to the time series
         :param step: step of the moving average
         """
-        self.data = TimeSeriesUtils._moving_average(self.data, step)
-
-    def normalize(self, normalizer) -> None:
-        """
-        Normalize the time series
-        :param normalizer: normalizer to use
-        """
-        self.data = TimeSeriesUtils._normalize(
-            self.data, normalizer)
+        self.data = TimeSeriesUtils.ts_moving_average(self.data, step)
 
     def add_window(self, type="sliding", window_size=None, stride=1) -> None:
         """
@@ -74,7 +67,7 @@ class TimeSeries:
         :param window_size: size of the window
         :param stride: stride of the window
         """
-        self.data = TimeSeriesUtils._sliding_window(
+        self.data = TimeSeriesUtils.ts_sliding_window(
             self.data, window_size, stride)
 
     def tumbling_window(self, window_size=None) -> None:
@@ -82,7 +75,7 @@ class TimeSeries:
         Add a tumbling window to the time series
         :param window_size: size of the window
         """
-        self.data = TimeSeriesUtils._tumbling_window(
+        self.data = TimeSeriesUtils.ts_tumbling_window(
             self.data, window_size)
 
     def remove_window(self, step=1) -> None:
@@ -90,7 +83,7 @@ class TimeSeries:
         Remove a window from the time series (sliding or tumbling)
         :param step: step of the window
         """
-        self.data = TimeSeriesUtils._remove_window(
+        self.data = TimeSeriesUtils.ts_remove_window(
             self.data, n_features=len(TimeSeriesUtils.FEATURES), step=step)
 
     def normalize(self, normalizer) -> None:
@@ -98,25 +91,25 @@ class TimeSeries:
         Normalize the time series
         :param normalizer: normalizer to use
         """
-        self.data = TimeSeriesUtils._normalize(self.data, normalizer)
+        self.data = TimeSeriesUtils.ts_normalize(self.data, normalizer)
 
     def normalize_inverse(self, normalizer) -> None:
         """
         Inverse normalization of the dataset processed
         :param normalizer: normalizer to use
         """
-        self.data = TimeSeriesUtils._normalize_inverse(self.data, normalizer)
+        self.data = TimeSeriesUtils.ts_normalize_inverse(self.data, normalizer)
 
     def pca(self, model) -> None:
         """
         Apply PCA to the time series
         :param model: PCA model to use
         """
-        self.data = TimeSeriesUtils._pca(self.data, model)
+        self.data = TimeSeriesUtils.ts_pca(self.data, model)
 
     def pca_inverse(self, model) -> None:
         """
         Inverse PCA to the time series
         :param model: PCA model to use
         """
-        self.data = TimeSeriesUtils._pca_inverse(self.data, model)
+        self.data = TimeSeriesUtils.ts_pca_inverse(self.data, model)
