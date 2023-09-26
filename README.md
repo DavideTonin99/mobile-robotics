@@ -3,6 +3,7 @@
 In this project, we introduce a way to manage a dataset of time series, with the goal of perform offline anomaly detection on a mobile robot.
 
 The code is able to process a time series dataset by easily applying pre-processing operations, several anomaly detection algorithms (PCA, NN, SVM, etc) and several threshold identification methods (quantile, one class svm, etc).
+But, the code is not limited to these methods, it's possible to add new methods and apply them to the dataset.
 
 The code is structured in a way such that online anomaly detection can be easily performed, once an real-time source of data is provided.
 
@@ -33,82 +34,103 @@ The waypoints specific point located in the ICE lab as shown in the following fi
 | 02_0607    | 5 - 4 - 3 - 4 - 15 | Anomaly with box in the middle of the path          |
 | 03_0607    | 15 - 4 - 3 - 4 - 5 | Nominal                                             |
 
+
+## PROJECT STRUCTURE
 Our goal was to create a structure in the code that would allow us to apply easily some pre-processing operations and several methods of anomaly detection (both models and identification of the threshold).
 
-The code is structured in the following way:
-- TimeSeries class
-- Dataset class
-- main.py
-- main_pca
-- ...
+The project is structured in the following way:
+* **folder dataset**: contains the dataset
+* **folder images**: contains the images obtained as output of the execution of the code
+* **folder stats**: contains the statistics obtained as output of the execution of the code
+* **package models**: contains the classes to manage the dataset and the time series
+* **package utils**: contains some methods to perform plot, statistics, etc...
+* **package classes**: contains the classes for the anomaly detection algorithms
 
+### PACKAGE MODELS
+The package models contains the following classes:
+- TimeSeries
+- TimeSeriesUtils
+- Dataset
+- NNLinearRegression
+
+#### TimeSeries
+	The TimeSeries class is used to manage a single time series.
+
+#### TimeSeriesUtils
+	The TimeSeriesUtils class contains some methods to perform operations on a time series.
+
+#### Dataset
+	The Dataset class is used to manage a dataset of time series.
+	It can be set as train or test dataset.
+	If the dataset is set as train, it can be used to train the anomaly detection algorithm.
+	If the dataset is set as train, it creates automatically a time series concatenating all the time series in the dataset.
+
+### PACKAGE CLASSES
+The package classes contains the following classes:
+- Params
+- Main
+- MainPCA
+- MainNNLinearRegression
+- MainSVM
+- MainLocalOutlierFactor
+
+#### Main
+	Abstract class that contains the main method to execute the anomaly detection algorithm.
+	All main files (MainPCA, MainNNLinearRegression, MainSVM, MainLocalOutlierFactor) extend this class and follow the same 
+	structure.
+
+Main methods of the ``Main`` class:
+```python
+	def __init__(self, **kwargs):
+		# set params and other variables
+		pass
+
+	def train(self):
+		# train the anomaly detection algorithm
+		pass
+	
+	def test(self):
+		# test the anomaly detection algorithm
+		pass
+	
+	def run(self):
+		# run the anomaly detection algorithm
+		pass
+```
+Every class implements the methods train, test and run in a different way, depending on the anomaly detection algorithm.
+The class main has the attributes: dataset_train, dataset_eval, dataset_test.
+The dataset_train is used to train the anomaly detection algorithm.
+The dataset_eval is used to evaluate the anomaly detection algorithm (for example in the case of neural networks).
+The dataset_test is used to test the anomaly detection algorithm.
+
+## PRE-PROCESSING
 Pre-processing operations:
-- sliding window
+- sliding window: apply temporal sliding window to the time series
+	- parameters: type, size, stride
+    - type: "sliding" or "tumbling". 
+      - If "sliding", the window slides over the time series. 
+      - If "tumbling", the window is applied to the time series without overlapping.
+    - size: size of the window
+    - stride: stride of the window
 - normalization
-- moving average
+- moving average: we can apply moving average on the time series, to reduce the noise.
 
-We tried these methods:
-- pca
-- ...
-
-Experiments and results:
-*the best method*
-*un par di grafici*
-
-
-    Course          Mobile Robotics
-    Davide Tonin    VR480503
-    Emanuele Feola  VR474837
-
-
----
-versione feola
-
-## Goal
-The aim of this project is to perform offline anomaly detection on a mobile robot.
-The code is able to process a time series dataset by easily applying pre-processing operations, several anomaly detection algorithms (PCA, NN, SVM, etc) and several threshold identification methods (quantile, one class svm, etc).
-The code is structured in a way such that online anomaly detection can be easily performed, once an real-time source of data is provided.
-
-## Code Structure
-The code is structured in the following way:
-- TimeSeries class
-	- breve spiegazione (cosa fa)
-- Dataset class
-	- breve spiegazione 
-- main.py
-- main_pca
-- ...
-
-## Pre-processing
-Pre-processing operations:
-- sliding window
-	- parametri: size, stride, ...
-- normalization
-- moving average
-
-## Pipeline
-- training
-- evluation
-- testing
-
-## Anomaly Detection algorithms
+## ANOMALY DETECTION ALGORITHMS
 The following methods have been tested and executed:
-- pca: applicazione della pca e ricostruzione del segnale, confronto degli errori di ricostruzione e identificazione delle anomalie basate su​  
-	- threshold calcolata con quantili​
-	- one class svm​
-	- local outlier factor​​
-- neural network "linear regression": training su traiettorie nominali e test su traiettorie nominali ed anomale (modello preso dal notebook colab)​
-- one class svm: training su traiettorie nominali e anomale, test su traiettorie nominali ed anomale (non presenti nel training set).
-	- Sia con e senza la pca per ridurre la dimensione dei segnali​
-- local outlier factor: training su traiettorie nominali e test su traiettorie nominali ed anomale​ ​
+- PCA:
+  - apply pca and reconstruction of the signal, comparison of the reconstruction errors and identification of anomalies based on
+	- threshold calculated with quantiles
+	- one class svm
+	- local outlier factor
+- ONE CLASS SVM
+- LOCAL OUTLIER FACTOR
+- NEURAL NETWORK "LINEAR REGRESSION"
 
 ## Metrics and scoring: quantifying the quality of predictions
 If at least one time window in the trajectory is predicted as anomalous, then the entire trajectory is labeled "anomalous".
 If none of the time windows are predicted as anomalous, then the trajectory is labeled "nominal".
-If the trajectory 
 
 ## Experiments and results:
-Among the different anomaly detection algorithms, the PCA is the one with the best results. 
 *the best method*
 *un par di grafici*
 

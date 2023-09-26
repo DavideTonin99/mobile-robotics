@@ -20,7 +20,6 @@ class Main(ABC):
         """
         self.params = params
         self.normalizer_model = params.NORMALIZER_MODEL
-        self.ad_model = None
         self.dataset_train = None
         self.dataset_train_process = None
         self.dataset_eval = None
@@ -90,6 +89,7 @@ class Main(ABC):
         """
         Train the model
         @param t_list: list of training time series
+        @param prefix: prefix of the dataset name
         """
         if t_list is None:
             t_list = []

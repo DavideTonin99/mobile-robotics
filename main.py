@@ -23,7 +23,7 @@ params = Params({
     'QUANTILE_LOWER_PERCENTAGE': 0.01,
     'QUANTILE_UPPER_PERCENTAGE': 0.99,
 })
-"""
+
 print("Exec PCA with svm")
 main = MainPCA(params=params)
 main.run(train_list=train_list, eval_list=[], test_list=test_list, show_plot=True)
@@ -45,7 +45,7 @@ main.run(train_list=train_list, eval_list=eval_list, test_list=test_list, show_p
 print("Exec Local Outlier Factor")
 main = MainLocalOutlierFactor(params=params)
 main.run(train_list=train_list, eval_list=[], test_list=test_list, show_plot=True)
-"""
+
 print("Exec SVM")
 train_list_svm = train_list + [f'anomaly_{i}' for i in range(10, 11)]
 main = MainSVM(params=params)
