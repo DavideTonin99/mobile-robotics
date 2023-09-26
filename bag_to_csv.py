@@ -9,6 +9,7 @@ from utils import *
 SAVE_PLOT = True
 KEYS = ["pose.pose.x", "pose.pose.y", "pose.pose.theta"]
 
+
 def rosbag_to_csv(data_base_path=None):
     """
     Convert all .bag files in the dataset folder to .csv files
@@ -67,14 +68,14 @@ def process_lidar_data(path_list):
 
         for idx, row in read_csv.iterrows():
             if idx % 1000 == 0 or idx == 0:
-                print("process row %d of %d" % (idx+1, read_csv.shape[0]))
+                print("process row %d of %d" % (idx + 1, read_csv.shape[0]))
 
             angle_min = row["angle_min"]
             angle_increment = row["angle_increment"]
             row_angles = angle_min + np.arange(541) * angle_increment
             # numpy.where(condition, [x, y, ]) # when condition True, yield x, otherwise yield y.
             row_angles = np.where(
-                row_angles < 0, row_angles + 2*math.pi, row_angles)
+                row_angles < 0, row_angles + 2 * math.pi, row_angles)
 
             row_distances = row["ranges_0":"ranges_540"]
             angle_step = math.pi / 4
@@ -83,11 +84,11 @@ def process_lidar_data(path_list):
             top_right_idx = np.argwhere(np.logical_and(
                 row_angles >= 0, row_angles <= angle_step))  # da 0 a 45
             top_left_idx = np.argwhere(np.logical_and(row_angles >= (
-                2*math.pi - angle_step), row_angles <= 2*math.pi))  # da 360-45 a 360
+                    2 * math.pi - angle_step), row_angles <= 2 * math.pi))  # da 360-45 a 360
             right_idx = np.argwhere(np.logical_and(
                 row_angles >= angle_step, row_angles <= math.pi / 2))  # da 45 a 90
             left_idx = np.argwhere(np.logical_and(row_angles >= (
-                2*math.pi - math.pi / 2), row_angles <= (2*math.pi - angle_step)))  # da 360-90 a 360-45
+                    2 * math.pi - math.pi / 2), row_angles <= (2 * math.pi - angle_step)))  # da 360-90 a 360-45
             # distanze corrispondenti agli indici trovati
             top_right_dist = row_distances[top_right_idx.flatten()]
             top_left_dist = row_distances[top_left_idx.flatten()]
@@ -260,5 +261,6 @@ def main():
     create_ml_csv(dir_path_list)
 
     plot_data(dir_path_list)
+
 
 main()

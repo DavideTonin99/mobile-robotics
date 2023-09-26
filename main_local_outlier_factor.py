@@ -1,16 +1,10 @@
-from TimeSeries import *
-from TimeSeriesUtils import *
 from Dataset import *
-from matplotlib import pyplot as plt
 from sklearn.preprocessing import StandardScaler
-from sklearn.neighbors import LocalOutlierFactor
 
-from plot_time_series import *
 from main import *
-from utils import *
 
 # CONSTANTS
-MOVING_AVG_STEP = 50
+MOVING_AVG_STEP = 10
 WINDOW_TYPE = 'sliding'
 WINDOW_SIZE = 15
 WINDOW_STRIDE = 10
@@ -61,4 +55,6 @@ dataset_test = Dataset(
 model = LocalOutlierFactor(n_neighbors=10, novelty=True, contamination='auto')
 
 main_local_outlier_factor(dataset_train=dataset_train, model=model, scaler_model=scaler_model, window_type=WINDOW_TYPE,
-         window_size=WINDOW_SIZE, window_stride=WINDOW_STRIDE, with_pca=True, pca_components=PCA_COMPONENTS, show_plot_variance=False, dataset_eval=dataset_eval, dataset_test=dataset_test)
+                          window_size=WINDOW_SIZE, window_stride=WINDOW_STRIDE, with_pca=True,
+                          pca_components=PCA_COMPONENTS, show_plot_variance=False, dataset_eval=dataset_eval,
+                          dataset_test=dataset_test)

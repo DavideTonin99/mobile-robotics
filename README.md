@@ -1,10 +1,35 @@
 # Mobile Robotics Anomaly Detection
 
-In this project, we introduce a way to manage a dataset of time series, focused on data of a mobile robot, with the goal of perform anomaly detection, eventually in real-time, on the working robot.
+In this project, we introduce a way to manage a dataset of time series, with the goal of perform offline anomaly detection on a mobile robot.
 
-The dataset is composed of 10 time series with anomalies, and 7 nominal without anomalies, divided in the following way:
+The code is able to process a time series dataset by easily applying pre-processing operations, several anomaly detection algorithms (PCA, NN, SVM, etc) and several threshold identification methods (quantile, one class svm, etc).
 
-*Mettere qui la tabella del dataset.*
+The code is structured in a way such that online anomaly detection can be easily performed, once an real-time source of data is provided.
+
+The dataset is composed of 10 time series with anomalies, and 7 nominal without anomalies.
+
+The waypoints specific point located in the ICE lab as shown in the following figure.
+
+![05_ice_waypoints](/Users/davidetonin/Documents/univr/magistrale/mobile_robotics/mobile-robotics/doc/05_ice_waypoints.png)
+
+| Filename   | Waypoints          | Comment                                             |
+| ---------- | ------------------ | --------------------------------------------------- |
+| 01_nominal | 5 - 4 - 15 - 4     | Nominal                                             |
+| 02_0606    | 3 - 4 - 15         | Anomalous                                           |
+| 03_0606    | 5 - 3 - 4 - 15     | Anomalous                                           |
+| 04_0606    | 15 - 4 - 3 - 5     | Nominal                                             |
+| 05_0606    | 5 - 3 - 4 - 15     | Nominal                                             |
+| 06_0606    | 15 - 4 - 3 - 5     | Nominal                                             |
+| 07_0606    | 5 - 4 - 3 - 15     | Anomaly                                             |
+| 08_0606    | 5 - 4 - 15         | Anomaly                                             |
+| 09_0606    | 5 - 4 - 15 - 4     | Anomaly                                             |
+| 10_0606    | 5 - 4 - 3 - 4 - 15 | Anomaly with box in the middle of the path          |
+| 11_0606    | 15 - 4 - 3         | Anomaly with the box but the robot collided the box |
+| 12_0606    | 5 - 4 - 3 - 4 - 15 | Nominal                                             |
+| 13_0606    | 15 - 4             | Anomaly                                             |
+| 01_0607    | -                  | Anomaly                                             |
+| 02_0607    | 5 - 4 - 3 - 4 - 15 | Anomaly with box in the middle of the path          |
+| 03_0607    | 15 - 4 - 3 - 4 - 5 | Nominal                                             |
 
 Our goal was to create a structure in the code that would allow us to apply easily some pre-processing operations and several methods of anomaly detection (both models and identification of the threshold).
 
@@ -34,7 +59,7 @@ Experiments and results:
     Emanuele Feola  VR474837
 
 
---- 
+---
 versione feola
 
 ## Goal

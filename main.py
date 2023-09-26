@@ -1,11 +1,9 @@
 from sklearn.svm import OneClassSVM
 from sklearn.neighbors import LocalOutlierFactor
 
-from TimeSeriesUtils import *
 from TimeSeries import *
 from utils import *
 import copy
-from NNLinearRegression import *
 
 
 def main_pca(dataset_train, scaler_model, window_type, window_size, window_stride, pca_components,
@@ -19,6 +17,7 @@ def main_pca(dataset_train, scaler_model, window_type, window_size, window_strid
     :param window_stride: window stride
     :param pca_components: number of components to keep
     :param show_plot_variance: show the plot of the variance
+    :param threshold_method: threshold method
     :param dataset_eval: evaluation dataset
     :param dataset_test: test dataset
     """
@@ -42,7 +41,7 @@ def main_pca(dataset_train, scaler_model, window_type, window_size, window_strid
     if dataset_test is not None:
         dataset_test_process = copy.deepcopy(dataset_test)
 
-    # TRAININ SECTION
+    # TRAINING SECTION
     dataset_train_process.add_window(
         type=window_type, window_size=window_size, stride=window_stride)
 

@@ -1,15 +1,10 @@
-from TimeSeries import *
-from TimeSeriesUtils import *
 from Dataset import *
-from matplotlib import pyplot as plt
 from sklearn.preprocessing import StandardScaler
 
-from plot_time_series import *
 from main import *
-from utils import *
 
 # CONSTANTS
-MOVING_AVG_STEP = 50
+MOVING_AVG_STEP = 10
 WINDOW_TYPE = 'sliding'
 WINDOW_SIZE = 70
 WINDOW_STRIDE = 30
@@ -53,4 +48,5 @@ dataset_test = Dataset(
     f'test {WINDOW_TYPE} window ws={WINDOW_SIZE}, stride={WINDOW_STRIDE}', time_series=test)
 
 main_pca(dataset_train=dataset_train, scaler_model=scaler_model, window_type=WINDOW_TYPE,
-         window_size=WINDOW_SIZE, window_stride=WINDOW_STRIDE, pca_components=PCA_COMPONENTS, show_plot_variance=False, threshold_method='local_outlier_factor', dataset_eval=dataset_eval, dataset_test=dataset_test)
+         window_size=WINDOW_SIZE, window_stride=WINDOW_STRIDE, pca_components=PCA_COMPONENTS, show_plot_variance=False,
+         threshold_method='local_outlier_factor', dataset_eval=dataset_eval, dataset_test=dataset_test)
