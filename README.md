@@ -10,7 +10,9 @@ The dataset is composed of 10 time series with anomalies, and 7 nominal without 
 
 The waypoints specific point located in the ICE lab as shown in the following figure.
 
-![05_ice_waypoints](/Users/davidetonin/Documents/univr/magistrale/mobile_robotics/mobile-robotics/doc/05_ice_waypoints.png)
+<img src="./doc/images/05_ice_waypoints.png" width="500">
+
+
 
 | Filename   | Waypoints          | Comment                                             |
 | ---------- | ------------------ | --------------------------------------------------- |
