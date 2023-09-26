@@ -131,8 +131,26 @@ If at least one time window in the trajectory is predicted as anomalous, then th
 If none of the time windows are predicted as anomalous, then the trajectory is labeled "nominal".
 
 ## Experiments and results:
-*the best method*
-*un par di grafici*
+
+### PCA with Local Outlier Factor
+
+#### MAP
+<img src="doc/img/pca_map_anomaly_4.png" width="500">
+
+#### Reconstruction error
+
+<img src="doc/img/pca_test_anomaly_4.png" width="500">
+
+<img src="doc/img/pca_test_anomalies_anomaly_4.png" width="500">
+
+### NN Linear Regression
+<img src="doc/img/nn_lr_test_anomalies_anomaly_4.png" width="500">
+    
+    tp: 6, fn 4, fp 3, tn 3
+    precision: 0.6666666666666666
+    recall: 0.6
+    fscore: 0.631578947368421
+
 
 ## Authors
     Course          Mobile Robotics
