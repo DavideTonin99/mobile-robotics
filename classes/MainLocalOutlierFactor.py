@@ -84,8 +84,9 @@ class MainLocalOutlierFactor(Main):
 
             for i in range(len(predict)):
                 if not predict[i]:
-                    anomalies[
-                    i * self.params.WINDOW_SIZE:i * self.params.WINDOW_STRIDE + self.params.WINDOW_SIZE] = np.nan
+                    start = i * self.params.WINDOW_STRIDE + (self.params.WINDOW_SIZE - self.params.WINDOW_STRIDE)
+                    end = i * self.params.WINDOW_STRIDE + self.params.WINDOW_SIZE
+                    anomalies[start:end, :] = np.nan
 
             curr_traj_predicted_anomaly = test_anomalies_mask.any()  # is anomaly prediction
             curr_traj_is_anomaly = "anomal" in ts_name  # ground truth

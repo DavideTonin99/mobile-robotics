@@ -70,7 +70,7 @@ class MainNNLinearRegression(Main):
                                      print_epoch=True)
 
         self.ad_params['lower_bound'], self.ad_params['upper_bound'] = compute_quantile_error_threshold(
-            errors=loss_log['t'], lower_perc=0.02, upper_perc=0.98)
+            errors=loss_log['t'], lower_perc=0.15, upper_perc=0.85)
 
     def test(self, t_list: list = None, show_plot: bool = True,
              prefix: str = 'test') -> None:
@@ -98,15 +98,20 @@ class MainNNLinearRegression(Main):
                 self.model.eval()
                 prediction = self.model(x)
                 prediction = prediction.cpu().detach().numpy()
-                error = (np.square(prediction - row_window).mean(axis=1))
-                anomaly_mask = ((error > self.ad_params['upper_bound']) |
-                                (error < self.ad_params['lower_bound'])) == True
-                if anomaly_mask.any():
+                error = np.square(compute_errors(row_window, prediction)).mean(axis=1)
+                anomaly_mask = True == ((error > self.ad_params['upper_bound']) |
+                                        (error < self.ad_params['lower_bound']))
+
+                if anomaly_mask:
                     count_windows_anomaly += 1
                     errors_list.append(error)
                 else:
-                    anomalies[i * self.params.WINDOW_SIZE:i *
-                                                          self.params.WINDOW_SIZE + self.params.WINDOW_SIZE] = np.nan
+                    if i == 0:
+                        anomalies[i * self.params.WINDOW_SIZE:(i+1) * self.params.WINDOW_SIZE, :] = np.nan
+                    else:
+                        start = i * self.params.WINDOW_STRIDE + (self.params.WINDOW_SIZE - self.params.WINDOW_STRIDE)
+                        end = i * self.params.WINDOW_STRIDE + self.params.WINDOW_SIZE
+                        anomalies[start:end, :] = np.nan
 
             curr_traj_predicted_anomaly = count_windows_anomaly > 0  # prediction
             curr_traj_is_anomaly = "anomal" in ts_name  # ground truth

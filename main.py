@@ -12,7 +12,7 @@ test_list += eval_list
 
 params = Params({
     'APPLY_MOVING_AVG': True,
-    'MOVING_AVG_STEP': 10,
+    'MOVING_AVG_STEP': 5,
     'WINDOW_TYPE': 'sliding',
     'WINDOW_SIZE': 15,
     'WINDOW_STRIDE': 5,

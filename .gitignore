@@ -165,7 +165,7 @@ cython_debug/
 .idea/mobile_rob_prj.iml
 .idea/modules.xml
 .idea/inspectionProfiles/profiles_settings.xml
-dataset/
+dataset/*/*.csv
 images/
 rosbag_to_csv.py
 .idea/

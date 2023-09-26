@@ -1,4 +1,0 @@
-tp: 10, fn 0, fp 6, tn 0
-precision: 0.625
-recall: 1.0
-fscore: 0.7692307692307693

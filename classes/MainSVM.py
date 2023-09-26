@@ -84,8 +84,9 @@ class MainSVM(Main):
 
             for i in range(len(predict)):
                 if not predict[i]:
-                    anomalies[
-                        i * self.params.WINDOW_SIZE:i * self.params.WINDOW_STRIDE + self.params.WINDOW_SIZE] = np.nan
+                    start = i * self.params.WINDOW_STRIDE + (self.params.WINDOW_SIZE - self.params.WINDOW_STRIDE)
+                    end = i * self.params.WINDOW_STRIDE + self.params.WINDOW_SIZE
+                    anomalies[start:end, :] = np.nan
 
             curr_traj_predicted_anomaly = test_anomalies_mask.any()  # is anomaly prediction
             curr_traj_is_anomaly = "anomal" in ts_name  # ground truth
@@ -114,7 +115,9 @@ class MainSVM(Main):
             except Exception as e:
                 pass
         save_stats_txt(
-            tp, fn, fp, tn, subfolder=f"svm_{prefix}_{self.params.THRESHOLD_TYPE}", filename=None, print_stats=True)
+            tp, fn, fp, tn,
+            subfolder=f"svm_{prefix}_{'pca' if self.params.APPLY_PCA else 'no_pca'}",
+            filename=None, print_stats=True)
 
     def run(self, train_list: list = None, eval_list: list = None, test_list: list = None,
             show_plot: bool = True) -> None:
