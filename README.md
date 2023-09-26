@@ -10,7 +10,7 @@ The dataset is composed of 10 time series with anomalies, and 7 nominal without 
 
 The waypoints specific point located in the ICE lab as shown in the following figure.
 
-<img src="./doc/images/05_ice_waypoints.png" width="500">
+<img src="doc/img/05_ice_waypoints.png" width="500">
 
 
 
